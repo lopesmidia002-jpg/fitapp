@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/logo.svg" />
+    <link rel="manifest" href="/manifest.webmanifest" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta name="theme-color" content="#0B0D10" />
+    <meta name="description" content="Omega Training — A plataforma definitiva para treinos, consultoria fitness e alta performance." />
+    <title>Omega Training — Plataforma Fitness & Performance</title>
+
+    <!-- Google Fonts: Inter & Manrope -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script>
+      (function() {
+        try {
+          localStorage.setItem('omega-theme', 'dark');
+          var root = document.documentElement;
+          root.classList.remove('light');
+          root.classList.add('dark');
+          root.setAttribute('data-theme', 'dark');
+          root.style.setProperty('--bg-main', '11 13 16');
+          root.style.setProperty('--bg-surface', '20 23 28');
+          root.style.setProperty('--bg-card', '27 32 39');
+          root.style.setProperty('--text-primary', '245 247 250');
+          root.style.setProperty('--text-secondary', '154 163 175');
+          root.style.setProperty('--border-color', '41 47 56');
+          root.style.setProperty('--primary-neon', '184 243 74');
+          root.style.setProperty('--primary-neon-hover', '166 224 57');
+          root.style.setProperty('--primary-foreground', '11 13 16');
+          root.style.colorScheme = 'dark';
+        } catch(e) {}
+      })();
+    </script>
+  </head>
+  <body class="bg-background text-foreground antialiased selection:bg-primary selection:text-background min-h-screen">
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      if ('serviceWorker' in navigator && window.location.protocol === 'https:') {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {});
+        });
+      }
+    </script>
+  </body>
+</html>

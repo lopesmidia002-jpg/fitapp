@@ -1,0 +1,51 @@
+services:
+  # -------------------------------------------------------------
+  # Frontend SPA Web Server (Vite + React 19 + Tailwind + Nginx)
+  # -------------------------------------------------------------
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: omega_training_app
+    ports:
+      - "5173:80"
+      - "3000:80"
+    environment:
+      - NODE_ENV=production
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://127.0.0.1/"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 5s
+
+  # -------------------------------------------------------------
+  # PostgreSQL Database (Multi-tenant schema, DDL & LGPD audit)
+  # -------------------------------------------------------------
+  postgres:
+    image: postgres:16-alpine
+    container_name: omega_training_db
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: omegatraining
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+    volumes:
+      - omega_postgres_data:/var/lib/postgresql/data
+      - ./docker/init-db.sql:/docker-entrypoint-initdb.d/01-init.sql:ro
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d omegatraining"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+volumes:
+  omega_postgres_data:
+    driver: local
