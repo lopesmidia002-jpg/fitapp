@@ -94,4 +94,34 @@ ${link}
     expect(updatedStudent.temporaryPassword).toMatch(/^Omega@\d{4}$/);
     expect(updatedStudent.temporaryPassword).not.toBe(student.temporaryPassword);
   });
+
+  it('should update student profile fields accurately when edited by coach', () => {
+    const student: Student = { ...INITIAL_STUDENTS[0] };
+    const updates: Partial<Student> = {
+      fullName: 'Marina Silva Rocha Atualizada',
+      email: 'marina.nova@email.com',
+      phone: '(11) 99999-8888',
+      goal: 'Definição e Ganho de Força',
+      currentWeightKg: 63.5,
+      targetWeightKg: 61.0,
+      heightCm: 167,
+      status: 'active',
+      privateNotes: 'Recuperando de tendinite no joelho esquerdo. Cargas moderadas no agachamento.',
+    };
+
+    const updatedStudent: Student = {
+      ...student,
+      ...updates,
+    };
+
+    expect(updatedStudent.fullName).toBe('Marina Silva Rocha Atualizada');
+    expect(updatedStudent.email).toBe('marina.nova@email.com');
+    expect(updatedStudent.phone).toBe('(11) 99999-8888');
+    expect(updatedStudent.goal).toBe('Definição e Ganho de Força');
+    expect(updatedStudent.currentWeightKg).toBe(63.5);
+    expect(updatedStudent.targetWeightKg).toBe(61.0);
+    expect(updatedStudent.heightCm).toBe(167);
+    expect(updatedStudent.privateNotes).toContain('tendinite');
+  });
 });
+

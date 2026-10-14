@@ -26,9 +26,13 @@ import {
   Sparkles,
   Eye,
   EyeOff,
-  Utensils
+  Utensils,
+  Pencil,
+  Save,
+  Check
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
+
 
 export function StudentsView() {
   const { students, addStudent, updateStudent, archiveStudent, nutritionPlans, toggleDietVisibility } = useApp();
@@ -86,7 +90,95 @@ export function StudentsView() {
     setNewStudent(prev => ({ ...prev, avatarUrl: PRESET_AVATARS[randomIndex] }));
   };
 
+  // Edit Student Form State & Handlers
+  const [editingStudent, setEditingStudent] = useState<Student | null>(null);
+  const [editFormData, setEditFormData] = useState({
+    fullName: '',
+    email: '',
+    phone: '',
+    avatarUrl: '',
+    goal: '',
+    currentWeightKg: 70,
+    targetWeightKg: 68,
+    heightCm: 175,
+    status: 'active' as 'active' | 'inactive' | 'archived' | 'blocked',
+    privateNotes: '',
+  });
+
+
+  const handleOpenEdit = (student: Student, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    setEditingStudent(student);
+    setEditFormData({
+      fullName: student.fullName,
+      email: student.email,
+      phone: student.phone || '',
+      avatarUrl: student.avatarUrl || '',
+      goal: student.goal || '',
+      currentWeightKg: student.currentWeightKg || 70,
+      targetWeightKg: student.targetWeightKg || 68,
+      heightCm: student.heightCm || 175,
+      status: student.status || 'active',
+      privateNotes: student.privateNotes || '',
+    });
+  };
+
+  const handleEditPhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (file.size > 5 * 1024 * 1024) {
+      alert('A imagem selecionada ultrapassa 5MB. Por favor escolha uma imagem menor.');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const result = event.target?.result as string;
+      if (result) {
+        setEditFormData(prev => ({ ...prev, avatarUrl: result }));
+      }
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleEditRandomAvatar = () => {
+    const randomIndex = Math.floor(Math.random() * PRESET_AVATARS.length);
+    setEditFormData(prev => ({ ...prev, avatarUrl: PRESET_AVATARS[randomIndex] }));
+  };
+
+  const handleSaveEdit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingStudent) return;
+
+    const updatedData = {
+      fullName: editFormData.fullName,
+      email: editFormData.email,
+      phone: editFormData.phone,
+      avatarUrl: editFormData.avatarUrl || undefined,
+      goal: editFormData.goal,
+      currentWeightKg: Number(editFormData.currentWeightKg),
+      targetWeightKg: Number(editFormData.targetWeightKg),
+      heightCm: Number(editFormData.heightCm),
+      status: editFormData.status,
+      privateNotes: editFormData.privateNotes,
+    };
+
+    updateStudent(editingStudent.id, updatedData);
+
+    if (selectedStudent && selectedStudent.id === editingStudent.id) {
+      setSelectedStudent(prev => prev ? {
+        ...prev,
+        ...updatedData,
+        avatarUrl: editFormData.avatarUrl,
+      } : null);
+    }
+
+    setEditingStudent(null);
+  };
+
   // Filter students
+
   const filteredStudents = students.filter(student => {
     const matchesSearch = student.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
                           student.email.toLowerCase().includes(searchQuery.toLowerCase());
@@ -254,10 +346,21 @@ export function StudentsView() {
                     </div>
                   </div>
 
-                  <Badge variant={student.status === 'active' ? 'success' : student.status === 'inactive' ? 'warning' : 'neutral'} size="sm">
-                    {student.status === 'active' ? 'Ativo' : student.status === 'inactive' ? 'Inativo' : 'Arquivado'}
-                  </Badge>
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenEdit(student, e)}
+                      className="p-1.5 rounded-lg text-muted hover:text-primary hover:bg-primary/10 transition-colors"
+                      title="Editar perfil do aluno"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </button>
+                    <Badge variant={student.status === 'active' ? 'success' : student.status === 'inactive' ? 'warning' : 'neutral'} size="sm">
+                      {student.status === 'active' ? 'Ativo' : student.status === 'inactive' ? 'Inativo' : 'Arquivado'}
+                    </Badge>
+                  </div>
                 </div>
+
 
                 <div className="mt-4 pt-3 border-t border-border/60 grid grid-cols-3 gap-2 text-center text-xs">
                   <div className="p-2 rounded-lg bg-surface/50">
@@ -394,7 +497,7 @@ export function StudentsView() {
             })()}
 
             {/* Actions */}
-            <div className="flex items-center justify-between pt-2 border-t border-border">
+            <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
               <Button
                 variant="danger"
                 size="sm"
@@ -408,17 +511,205 @@ export function StudentsView() {
                 <span>Arquivar Aluno</span>
               </Button>
 
-              <Button
-                variant="primary"
-                size="sm"
-                onClick={() => setSelectedStudent(null)}
-              >
-                Concluir Visualização
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleOpenEdit(selectedStudent)}
+                  className="flex items-center gap-1.5 border-primary/40 text-primary hover:bg-primary/10"
+                >
+                  <Pencil className="h-3.5 w-3.5" />
+                  <span>Editar Perfil</span>
+                </Button>
+
+                <Button
+                  variant="primary"
+                  size="sm"
+                  onClick={() => setSelectedStudent(null)}
+                >
+                  Concluir Visualização
+                </Button>
+              </div>
             </div>
           </div>
         </Modal>
       )}
+
+      {/* Edit Student Profile Modal */}
+      {editingStudent && (
+        <Modal
+          isOpen={!!editingStudent}
+          onClose={() => setEditingStudent(null)}
+          title={`Editar Perfil: ${editingStudent.fullName}`}
+          description="Altere dados cadastrais, objetivos, medidas corporais e observações restritas."
+        >
+          <form onSubmit={handleSaveEdit} className="space-y-4">
+            {/* Photo / Avatar Section */}
+            <div className="p-4 rounded-xl bg-surface border border-border flex flex-col sm:flex-row items-center gap-4">
+              <div className="relative">
+                <img
+                  src={editFormData.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+                  alt={editFormData.fullName}
+                  className="h-16 w-16 rounded-2xl object-cover ring-2 ring-primary"
+                />
+              </div>
+
+              <div className="flex-1 space-y-2 text-center sm:text-left">
+                <div>
+                  <span className="text-xs font-bold text-foreground">Foto do Aluno</span>
+                  <p className="text-[11px] text-muted">Carregue uma imagem ou gere um avatar aleatório</p>
+                </div>
+
+                <div className="flex flex-wrap items-center justify-center sm:justify-start gap-2">
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={handleEditPhotoUpload}
+                      className="hidden"
+                    />
+                    <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold rounded-lg bg-surface border border-border hover:border-primary text-foreground transition-all">
+                      <Camera className="h-3.5 w-3.5 text-primary" />
+                      <span>Alterar Foto</span>
+                    </span>
+                  </label>
+
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleEditRandomAvatar}
+                    className="text-xs flex items-center gap-1"
+                  >
+                    <Sparkles className="h-3.5 w-3.5 text-primary" />
+                    <span>Avatar Aleatório</span>
+                  </Button>
+                </div>
+              </div>
+            </div>
+
+            {/* Basic Info */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Nome Completo *</label>
+                <Input
+                  value={editFormData.fullName}
+                  onChange={e => setEditFormData(prev => ({ ...prev, fullName: e.target.value }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">E-mail *</label>
+                <Input
+                  type="email"
+                  value={editFormData.email}
+                  onChange={e => setEditFormData(prev => ({ ...prev, email: e.target.value }))}
+                  required
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Telefone / WhatsApp</label>
+                <Input
+                  value={editFormData.phone}
+                  onChange={e => setEditFormData(prev => ({ ...prev, phone: e.target.value }))}
+                  placeholder="(11) 99999-9999"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Status da Conta</label>
+                <select
+                  value={editFormData.status}
+                  onChange={e => setEditFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                  className="w-full bg-surface border border-border text-foreground text-xs rounded-xl px-3 py-2.5 focus:outline-none focus:ring-1 focus:ring-primary"
+                >
+                  <option value="active">Ativo (Acesso Liberado)</option>
+                  <option value="inactive">Inativo (Pausado)</option>
+                  <option value="blocked">Bloqueado</option>
+                  <option value="archived">Arquivado</option>
+                </select>
+
+              </div>
+            </div>
+
+            {/* Goal and Metrics */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground">Objetivo Principal *</label>
+              <Input
+                value={editFormData.goal}
+                onChange={e => setEditFormData(prev => ({ ...prev, goal: e.target.value }))}
+                placeholder="Ex: Hipertrofia e Definição Muscular"
+                required
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-3">
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Peso Atual (kg)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={editFormData.currentWeightKg}
+                  onChange={e => setEditFormData(prev => ({ ...prev, currentWeightKg: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Meta de Peso (kg)</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={editFormData.targetWeightKg}
+                  onChange={e => setEditFormData(prev => ({ ...prev, targetWeightKg: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-xs font-semibold text-foreground">Altura (cm)</label>
+                <Input
+                  type="number"
+                  value={editFormData.heightCm}
+                  onChange={e => setEditFormData(prev => ({ ...prev, heightCm: Number(e.target.value) }))}
+                  required
+                />
+              </div>
+            </div>
+
+            {/* Private Notes */}
+            <div className="space-y-1">
+              <label className="text-xs font-semibold text-foreground flex items-center gap-1.5">
+                <ShieldAlert className="h-3.5 w-3.5 text-amber-400" />
+                <span>Notas Clínicas e Restrições Físicas (LGPD Restrito)</span>
+              </label>
+              <textarea
+                rows={3}
+                value={editFormData.privateNotes}
+                onChange={e => setEditFormData(prev => ({ ...prev, privateNotes: e.target.value }))}
+                placeholder="Histórico de lesões, restrições articulares, medicamentos ou recomendações médicas..."
+                className="w-full bg-surface border border-border text-foreground text-xs rounded-xl p-3 focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
+
+            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
+              <Button type="button" variant="ghost" onClick={() => setEditingStudent(null)}>
+                Cancelar
+              </Button>
+              <Button type="submit" variant="primary" className="flex items-center gap-1.5">
+                <Save className="h-4 w-4" />
+                <span>Salvar Alterações</span>
+              </Button>
+            </div>
+          </form>
+        </Modal>
+      )}
+
 
       {/* Add Student Modal */}
       <Modal
