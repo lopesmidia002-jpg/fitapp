@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../ui/Button';
-import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock, LogIn } from 'lucide-react';
+import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock, LogIn, LogOut } from 'lucide-react';
 import { UserRole } from '../../types';
 import { AdminLoginModal } from '../auth/AdminLoginModal';
 import { UserAuthModal } from '../auth/UserAuthModal';
@@ -22,6 +22,7 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
     markNotificationAsRead,
     isAdminAuthenticated,
     logoutAdmin,
+    logoutUser,
   } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
@@ -69,60 +70,100 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
 
       {/* Center/Right: Role Switcher Demo Bar & Actions */}
       <div className="flex items-center gap-2 md:gap-4">
-        {/* Role Switcher Pill */}
-        <div className="flex items-center bg-card p-1 rounded-xl border border-border text-xs">
-          <button
-            type="button"
-            onClick={() => switchRole('pro')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-              currentRole === 'pro'
-                ? 'bg-primary text-background font-bold shadow-sm'
-                : 'text-muted hover:text-foreground'
-            }`}
-            title="Alternar para visão do Treinador/Personal"
-          >
-            <Dumbbell className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Treinador</span>
-          </button>
+        {/* Student Environment Isolation Badge & Logout */}
+        {currentRole === 'student' ? (
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-xs">
+              <UserCheck className="h-3.5 w-3.5" />
+              <span>Ambiente do Aluno</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={logoutUser}
+              className="text-xs h-8 px-2.5 border-border hover:bg-card flex items-center gap-1.5 text-muted hover:text-foreground"
+              title="Encerrar sessão e sair do aplicativo"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          </div>
+        ) : (currentRole === 'pro' && ((typeof window !== 'undefined' && sessionStorage.getItem('omega_auth_role') === 'pro') || currentUser.id.startsWith('trainer-'))) ? (
+          /* Dedicated Trainer Environment Isolation Badge & Logout */
+          <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-xs">
+              <Dumbbell className="h-3.5 w-3.5" />
+              <span>Ambiente do Treinador</span>
+            </div>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={logoutUser}
+              className="text-xs h-8 px-2.5 border-border hover:bg-card flex items-center gap-1.5 text-muted hover:text-foreground"
+              title="Encerrar sessão do treinador"
+            >
+              <LogOut className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Sair</span>
+            </Button>
+          </div>
+        ) : (
+          /* Multi-Role Switcher Bar (with Admin password lock) */
+          <div className="flex items-center bg-card p-1 rounded-xl border border-border text-xs">
+            <button
+              type="button"
+              onClick={() => switchRole('pro')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
+                currentRole === 'pro'
+                  ? 'bg-primary text-background font-bold shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              title="Alternar para visão do Treinador/Personal"
+            >
+              <Dumbbell className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Treinador</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => switchRole('student')}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-              currentRole === 'student'
-                ? 'bg-primary text-background font-bold shadow-sm'
-                : 'text-muted hover:text-foreground'
-            }`}
-            title="Alternar para visão do Aluno (Mobile PWA)"
-          >
-            <UserCheck className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Aluno</span>
-          </button>
+            <button
+              type="button"
+              onClick={() => switchRole('student')}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
+                (currentRole as string) === 'student'
+                  ? 'bg-primary text-background font-bold shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              title="Alternar para visão do Aluno (Mobile PWA)"
+            >
+              <UserCheck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Aluno</span>
+            </button>
 
-          <button
-            type="button"
-            onClick={() => {
-              if (currentRole === 'superadmin') return;
-              if (isAdminAuthenticated) {
-                switchRole('superadmin');
-              } else {
-                setIsAdminLoginModalOpen(true);
-              }
-            }}
-            className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-              currentRole === 'superadmin'
-                ? 'bg-primary text-background font-bold shadow-sm'
-                : 'text-muted hover:text-foreground'
-            }`}
-            title={isAdminAuthenticated ? "Alternar para visão Superadmin Global" : "Acessar painel Admin (Requer Senha)"}
-          >
-            <ShieldCheck className="h-3.5 w-3.5" />
-            <span className="hidden sm:inline">Admin</span>
-            {!isAdminAuthenticated && currentRole !== 'superadmin' && (
-              <Lock className="h-2.5 w-2.5 opacity-60 ml-0.5" />
-            )}
-          </button>
-        </div>
+            <button
+              type="button"
+              onClick={() => {
+                if (currentRole === 'superadmin') return;
+                if (isAdminAuthenticated) {
+                  switchRole('superadmin');
+                } else {
+                  setIsAdminLoginModalOpen(true);
+                }
+              }}
+              className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
+                currentRole === 'superadmin'
+                  ? 'bg-primary text-background font-bold shadow-sm'
+                  : 'text-muted hover:text-foreground'
+              }`}
+              title={isAdminAuthenticated ? "Alternar para visão Superadmin Global" : "Acessar painel Admin (Requer Senha)"}
+            >
+              <ShieldCheck className="h-3.5 w-3.5" />
+              <span className="hidden sm:inline">Admin</span>
+              {!isAdminAuthenticated && currentRole !== 'superadmin' && (
+                <Lock className="h-2.5 w-2.5 opacity-60 ml-0.5" />
+              )}
+            </button>
+          </div>
+        )}
 
         {/* Superadmin Lock/Logout Button */}
         {currentRole === 'superadmin' && (

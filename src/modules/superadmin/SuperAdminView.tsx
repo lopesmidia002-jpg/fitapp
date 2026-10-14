@@ -148,7 +148,7 @@ export function SuperAdminView() {
   const getStudentAccessLink = (student: Student) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    return `${origin}${pathname}?role=student&studentId=${student.id}`;
+    return `${origin}${pathname}?access=student&id=${student.id}&login=${encodeURIComponent(student.email)}`;
   };
 
   const getStudentInviteMessage = (student: Student) => {
@@ -167,8 +167,10 @@ ${link}
 • *Login (E-mail):* ${cleanEmail}
 • *Senha Inicial:* ${pwd}
 
-📲 *Dica de Instalação:*
-Abra o link no navegador do celular (Chrome ou Safari) e clique em *"Adicionar à Tela de Início"* para usar como aplicativo nativo.
+🔒 *Instruções de Acesso:*
+1. Clique no link acima;
+2. Digite sua senha de acesso na tela inicial para entrar diretamente no ambiente do aluno;
+3. No celular (Chrome ou Safari), toque em *"Adicionar à Tela de Início"* para salvar como aplicativo.
 
 Bons treinos! 🔥`;
   };
@@ -477,7 +479,7 @@ Bons treinos! 🔥`;
   const getTrainerAccessLink = (trainer: Trainer) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    return `${origin}${pathname}?role=pro&trainerId=${trainer.id}`;
+    return `${origin}${pathname}?access=pro&id=${trainer.id}&login=${encodeURIComponent(trainer.email)}`;
   };
 
   const getTrainerInviteMessage = (trainer: Trainer) => {
@@ -498,13 +500,16 @@ ${link}
 • *CREF:* ${trainer.cref || 'Confirmado'}
 • *Especialidade:* ${trainer.specialty || 'Treinamento & Musculação'}
 
+🔒 *Instruções de Acesso:*
+1. Clique no link acima;
+2. Digite sua senha de acesso na tela de login para validar sua conta de treinador;
+3. Acesse seu painel completo para gerenciar alunos, treinos e dietas.
+
 🎯 *Recursos do Painel:*
 • Prescrição e periodização completa de treinos
 • Montagem de dietas e cardápios com a Tabela TACO
 • Avaliações físicas, bioimpedância e acompanhamento de metas
 • Gestão de alunos, check-ins e histórico evolutivo
-
-📲 *Dica:* Abra o link acima no navegador do celular ou computador e salve como atalho.
 
 Bons atendimentos e sucesso! 🚀`;
   };

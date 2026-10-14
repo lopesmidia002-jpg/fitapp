@@ -266,3 +266,12 @@ export interface SaaSPlan {
   features: string[];
   isPopular?: boolean;
 }
+
+export interface PendingInviteAuth {
+  role: 'student' | 'pro';
+  targetId: string;
+  loginEmail?: string;
+  student?: Student;
+  trainer?: Trainer;
+}
+

@@ -111,7 +111,7 @@ export function StudentAccessView() {
   const getStudentAccessLink = (student: Student) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    return `${origin}${pathname}?role=student&studentId=${student.id}`;
+    return `${origin}${pathname}?access=student&id=${student.id}&login=${encodeURIComponent(student.email)}`;
   };
 
   const getStudentInviteMessage = (student: Student) => {
@@ -130,8 +130,10 @@ ${link}
 • *Login (E-mail):* ${cleanEmail}
 • *Senha Inicial:* ${pwd}
 
-📲 *Dica de Instalação:*
-Abra o link no navegador do celular (Chrome ou Safari) e clique em *"Adicionar à Tela de Início"* para usar como aplicativo nativo no seu celular.
+🔒 *Instruções de Acesso:*
+1. Clique no link acima;
+2. Digite sua senha de acesso na tela de login para validar seu perfil de aluno;
+3. No celular (Chrome ou Safari), toque em *"Adicionar à Tela de Início"* para salvar como aplicativo nativo no seu aparelho.
 
 Bons treinos! 🔥`;
   };
@@ -404,14 +406,14 @@ Bons treinos! 🔥`;
             </div>
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 w-full md:w-auto shrink-0 min-w-0">
               <span className="font-mono text-[11px] bg-background px-2.5 py-1.5 rounded-lg border border-border text-primary font-medium truncate max-w-full sm:max-w-xs text-center sm:text-left">
-                {typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?role=student` : '...'}
+                {typeof window !== 'undefined' ? `${window.location.origin}${window.location.pathname}?access=student` : '...'}
               </span>
               <Button
                 type="button"
                 variant="ghost"
                 size="sm"
                 onClick={() => {
-                  const generalLink = `${window.location.origin}${window.location.pathname}?role=student`;
+                  const generalLink = `${window.location.origin}${window.location.pathname}?access=student`;
                   navigator.clipboard.writeText(generalLink);
                   setShareToast('Link geral de acesso copiado!');
                   setTimeout(() => setShareToast(null), 3000);

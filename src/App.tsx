@@ -20,9 +20,23 @@ import { StudentAccessView } from './modules/students/StudentAccessView';
 import { Lock, AlertTriangle, ShieldCheck, Phone, Mail, Key } from 'lucide-react';
 import { Button } from './components/ui/Button';
 import { AdminLoginModal } from './components/auth/AdminLoginModal';
+import { InviteLoginGate } from './components/auth/InviteLoginGate';
 
 export function App() {
-  const { currentRole, currentUser, trainers, switchRole, theme, isAdminAuthenticated } = useApp();
+  const {
+    currentRole,
+    currentUser,
+    trainers,
+    switchRole,
+    theme,
+    isAdminAuthenticated,
+    pendingInviteAuth,
+  } = useApp();
+
+  // If user arrived via an invite link and needs to validate credentials
+  if (pendingInviteAuth) {
+    return <InviteLoginGate />;
+  }
 
   // Check if current coach/trainer is blocked
   const currentTrainer = trainers.find(t => t.id === currentUser.id || t.email === currentUser.email);

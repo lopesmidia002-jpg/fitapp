@@ -13,6 +13,7 @@ import {
   NotificationItem,
   NutritionPlan,
   Trainer,
+  PendingInviteAuth,
 } from '../types';
 import {
   INITIAL_USERS,
@@ -95,6 +96,11 @@ interface AppContextType {
   loginUser: (email: string, password?: string) => { success: boolean; error?: string };
   registerUser: (userData: { fullName: string; email: string; password?: string; role: 'student' | 'pro' }) => { success: boolean; error?: string };
   logoutUser: () => void;
+  // Invite link authentication & gate state
+  pendingInviteAuth: PendingInviteAuth | null;
+  setPendingInviteAuth: (auth: PendingInviteAuth | null) => void;
+  authenticateInvite: (passwordInput: string) => { success: boolean; error?: string };
+  clearInviteAuth: () => void;
 }
 
 
@@ -126,6 +132,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       password: 'Omega@Admin2026',
     };
   });
+
+  const [pendingInviteAuth, setPendingInviteAuth] = useState<PendingInviteAuth | null>(null);
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('omega_user') || localStorage.getItem('fitcore_user');
@@ -461,59 +469,210 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     localStorage.setItem('omega_nutrition_plans', JSON.stringify(nutritionPlans));
   }, [nutritionPlans]);
 
-  // Support direct access link via URL parameters (?role=student&studentId=... or ?role=pro&trainerId=...)
+  // Support direct access link via URL parameters (?access=student&id=... or ?role=student&studentId=...)
   useEffect(() => {
     try {
       const urlParams = new URLSearchParams(window.location.search);
-      const roleParam = urlParams.get('role');
-      const studentIdParam = urlParams.get('studentId');
-      const trainerIdParam = urlParams.get('trainerId');
+      const accessParam = urlParams.get('access') || urlParams.get('role');
+      const studentIdParam = urlParams.get('studentId') || (accessParam === 'student' ? urlParams.get('id') : null);
+      const trainerIdParam = urlParams.get('trainerId') || (accessParam === 'pro' ? urlParams.get('id') : null);
+      const loginParam = urlParams.get('login');
 
-      if (roleParam === 'student') {
-        const student = studentIdParam ? students.find(s => s.id === studentIdParam) : null;
+      if (accessParam === 'student') {
+        const student = (studentIdParam ? students.find(s => s.id === studentIdParam) : null)
+          || (loginParam ? students.find(s => s.email.toLowerCase() === loginParam.toLowerCase()) : null)
+          || students[0]
+          || INITIAL_STUDENTS[0];
+
         if (student) {
-          setCurrentUser({
-            id: student.id,
-            email: student.email,
-            fullName: student.fullName,
-            role: 'student',
-            organizationId: student.organizationId,
-            avatarUrl: student.avatarUrl,
-            phone: student.phone,
-          });
-        } else {
-          const defaultStudent = INITIAL_USERS.find(u => u.role === 'student');
-          if (defaultStudent) {
-            setCurrentUser(defaultStudent);
+          const authUserId = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_user_id') : null;
+          const authRole = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_role') : null;
+
+          if (authUserId === student.id && authRole === 'student') {
+            setCurrentUser({
+              id: student.id,
+              email: student.email,
+              fullName: student.fullName,
+              role: 'student',
+              organizationId: student.organizationId,
+              avatarUrl: student.avatarUrl,
+              phone: student.phone,
+            });
+            setIsUserLoggedIn(true);
+          } else {
+            // Intercept and prompt the Access Login & Password Gate
+            setPendingInviteAuth({
+              role: 'student',
+              targetId: student.id,
+              loginEmail: student.email,
+              student,
+            });
           }
         }
-      } else if (roleParam === 'pro') {
-        const trainer = trainerIdParam ? trainers.find(t => t.id === trainerIdParam) : null;
+      } else if (accessParam === 'pro') {
+        const trainer = (trainerIdParam ? trainers.find(t => t.id === trainerIdParam) : null)
+          || (loginParam ? trainers.find(t => t.email.toLowerCase() === loginParam.toLowerCase()) : null)
+          || trainers[0]
+          || INITIAL_TRAINERS[0];
+
         if (trainer) {
-          setCurrentUser({
-            id: trainer.id,
-            email: trainer.email,
-            fullName: trainer.fullName,
-            role: 'pro',
-            organizationId: trainer.organizationId,
-            avatarUrl: trainer.avatarUrl,
-            phone: trainer.phone,
-          });
-        } else {
-          const defaultPro = INITIAL_USERS.find(u => u.role === 'pro');
-          if (defaultPro) setCurrentUser(defaultPro);
+          const authUserId = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_user_id') : null;
+          const authRole = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_role') : null;
+
+          if (authUserId === trainer.id && authRole === 'pro') {
+            setCurrentUser({
+              id: trainer.id,
+              email: trainer.email,
+              fullName: trainer.fullName,
+              role: 'pro',
+              organizationId: trainer.organizationId,
+              avatarUrl: trainer.avatarUrl,
+              phone: trainer.phone,
+            });
+            setIsUserLoggedIn(true);
+          } else {
+            // Intercept and prompt the Access Login & Password Gate
+            setPendingInviteAuth({
+              role: 'pro',
+              targetId: trainer.id,
+              loginEmail: trainer.email,
+              trainer,
+            });
+          }
         }
-      } else if (roleParam === 'superadmin') {
+      } else if (accessParam === 'superadmin') {
         const isAuth = sessionStorage.getItem('omega_admin_auth') === 'true';
         if (isAuth) {
-          const targetUser = INITIAL_USERS.find(u => u.role === roleParam);
+          const targetUser = INITIAL_USERS.find(u => u.role === accessParam);
           if (targetUser) setCurrentUser(targetUser);
         }
       }
     } catch {
       // safe fallback if SSR or window undefined
     }
-  }, []);
+  }, [students, trainers]);
+
+  const authenticateInvite = (passwordInput: string): { success: boolean; error?: string } => {
+    if (!pendingInviteAuth) {
+      return { success: false, error: 'Nenhum convite pendente para autenticação.' };
+    }
+
+    const trimmedPassword = passwordInput.trim();
+    if (!trimmedPassword) {
+      return { success: false, error: 'Por favor, informe sua senha de acesso.' };
+    }
+
+    if (pendingInviteAuth.role === 'student') {
+      const student = pendingInviteAuth.student || students.find(s => s.id === pendingInviteAuth.targetId);
+      if (!student) {
+        return { success: false, error: 'Aluno não encontrado no sistema.' };
+      }
+
+      if (student.accessBlocked || student.status === 'blocked') {
+        return {
+          success: false,
+          error: `Acesso do aluno suspenso ou bloqueado. Motivo: ${student.blockedReason || 'Consulte seu treinador.'}`
+        };
+      }
+
+      const validPasswords = [
+        student.temporaryPassword,
+        'Omega@2026',
+        'aluno123',
+        'Fit@1234',
+      ].filter(Boolean);
+
+      const isMatch = validPasswords.some(p => p === trimmedPassword);
+      if (isMatch) {
+        try {
+          sessionStorage.setItem('omega_auth_user_id', student.id);
+          sessionStorage.setItem('omega_auth_role', 'student');
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch {}
+
+        const userObj: UserProfile = {
+          id: student.id,
+          email: student.email,
+          fullName: student.fullName,
+          role: 'student',
+          organizationId: student.organizationId,
+          avatarUrl: student.avatarUrl,
+          phone: student.phone,
+        };
+
+        setCurrentUser(userObj);
+        setIsUserLoggedIn(true);
+        setPendingInviteAuth(null);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Senha incorreta. Verifique a senha recebida ou use o botão de preenchimento Demo.' };
+      }
+    }
+
+    if (pendingInviteAuth.role === 'pro') {
+      const trainer = pendingInviteAuth.trainer || trainers.find(t => t.id === pendingInviteAuth.targetId);
+      if (!trainer) {
+        return { success: false, error: 'Treinador não encontrado no sistema.' };
+      }
+
+      if (trainer.accessBlocked || trainer.status === 'blocked') {
+        return {
+          success: false,
+          error: `Acesso profissional bloqueado. Motivo: ${trainer.blockedReason || 'Consulte o administrador.'}`
+        };
+      }
+
+      const validPasswords = [
+        trainer.temporaryPassword,
+        'Omega@Coach2026',
+        'treinador123',
+        'Omega@2026',
+      ].filter(Boolean);
+
+      const isMatch = validPasswords.some(p => p === trimmedPassword);
+      if (isMatch) {
+        try {
+          sessionStorage.setItem('omega_auth_user_id', trainer.id);
+          sessionStorage.setItem('omega_auth_role', 'pro');
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch {}
+
+        const userObj: UserProfile = {
+          id: trainer.id,
+          email: trainer.email,
+          fullName: trainer.fullName,
+          role: 'pro',
+          organizationId: trainer.organizationId,
+          avatarUrl: trainer.avatarUrl,
+          phone: trainer.phone,
+        };
+
+        setCurrentUser(userObj);
+        setIsUserLoggedIn(true);
+        setPendingInviteAuth(null);
+        return { success: true };
+      } else {
+        return { success: false, error: 'Senha incorreta. Verifique a senha recebida ou use o botão de preenchimento Demo.' };
+      }
+    }
+
+    return { success: false, error: 'Perfil de acesso não reconhecido.' };
+  };
+
+  const clearInviteAuth = () => {
+    setPendingInviteAuth(null);
+    try {
+      sessionStorage.removeItem('omega_auth_user_id');
+      sessionStorage.removeItem('omega_auth_role');
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {}
+  };
 
   const loginAdmin = (loginInput: string, passwordInput: string): boolean => {
     const cleanInput = loginInput.trim().toLowerCase();
@@ -695,7 +854,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutUser = () => {
     setIsUserLoggedIn(false);
-    try { localStorage.removeItem('omega_user_logged_in'); } catch {}
+    try {
+      localStorage.removeItem('omega_user_logged_in');
+      sessionStorage.removeItem('omega_auth_user_id');
+      sessionStorage.removeItem('omega_auth_role');
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    } catch {}
     const defaultStudent = INITIAL_USERS.find(u => u.role === 'student') || INITIAL_USERS[0];
     setCurrentUser(defaultStudent);
   };
@@ -703,6 +869,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const switchRole = (role: UserRole) => {
     if (role === 'superadmin' && !isAdminAuthenticated) {
       return;
+    }
+    // Prevent student from switching away to pro or superadmin directly
+    if (currentUser.role === 'student' && role !== 'student') {
+      const authRole = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_role') : null;
+      if (authRole === 'student') {
+        alert('Ambiente exclusivo do aluno. Para acessar outro perfil, encerre sua sessão.');
+        return;
+      }
     }
     const targetUser = INITIAL_USERS.find(u => u.role === role) || {
       ...INITIAL_USERS[0],
@@ -1036,6 +1210,10 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginUser,
         registerUser,
         logoutUser,
+        pendingInviteAuth,
+        setPendingInviteAuth,
+        authenticateInvite,
+        clearInviteAuth,
       }}
     >
 
