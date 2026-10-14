@@ -29,16 +29,16 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
 
 
   return (
-    <header className="h-16 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
+    <header className="h-16 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-30 px-3 sm:px-4 md:px-8 flex items-center justify-between max-w-full overflow-x-hidden">
       {/* Brand & Organization */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-2.5 sm:gap-3 shrink-0">
         {/* Mobile Hamburger Menu Toggle Button (Coach only, hidden for superadmin) */}
         {currentRole !== 'student' && currentRole !== 'superadmin' && onToggleMobileMenu && (
           <Button
             variant="ghost"
             size="icon"
             onClick={onToggleMobileMenu}
-            className="md:hidden text-muted hover:text-foreground h-9 w-9 p-0 -ml-1"
+            className="md:hidden text-muted hover:text-foreground h-9 w-9 p-0 -ml-1 shrink-0"
             aria-label={isMobileMenuOpen ? "Fechar menu principal" : "Abrir menu principal"}
           >
             {isMobileMenuOpen ? (
@@ -49,9 +49,9 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
           </Button>
         )}
 
-        <div className="flex items-center gap-2.5">
-          <img src="/logo.svg" alt="Omega Training" className="h-9 w-9 rounded-xl shadow-sm" />
-          <span className="font-extrabold text-lg tracking-tight text-foreground hidden sm:inline-block">
+        <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+          <img src="/logo.svg" alt="Omega Training" className="h-8 w-8 sm:h-9 sm:w-9 rounded-xl shadow-sm shrink-0" />
+          <span className="font-extrabold text-base sm:text-lg tracking-tight text-foreground hidden sm:inline-block">
             OMEGA <span className="text-primary font-black">TRAINING</span>
           </span>
         </div>
@@ -66,20 +66,21 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
       </div>
 
       {/* Center/Right: Role Switcher Demo Bar & Actions */}
-      <div className="flex items-center gap-2 md:gap-4">
+      <div className="flex items-center gap-1.5 sm:gap-2 md:gap-4 shrink-0">
         {/* Student Environment Isolation Badge & Logout */}
         {currentRole === 'student' ? (
-          <div className="flex items-center gap-2">
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-xs">
-              <UserCheck className="h-3.5 w-3.5" />
-              <span>Ambiente do Aluno</span>
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            <div className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-xs shrink-0">
+              <UserCheck className="h-3.5 w-3.5 shrink-0" />
+              <span className="hidden sm:inline">Ambiente do Aluno</span>
+              <span className="sm:hidden font-extrabold">Aluno</span>
             </div>
             <Button
               type="button"
               variant="outline"
               size="sm"
               onClick={logoutUser}
-              className="text-xs h-8 px-2.5 border-border hover:bg-card flex items-center gap-1.5 text-muted hover:text-foreground"
+              className="text-xs h-8 px-2 sm:px-2.5 border-border hover:bg-card flex items-center gap-1 text-muted hover:text-foreground shrink-0"
               title="Encerrar sessão e sair do aplicativo"
             >
               <LogOut className="h-3.5 w-3.5" />
@@ -246,14 +247,14 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
         <button
           type="button"
           onClick={logoutUser}
-          className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border-l border-border hover:bg-card/80 transition-all text-left group"
+          className="flex items-center gap-2 pl-2 pr-1.5 sm:pr-2.5 py-1 rounded-xl border-l border-border hover:bg-card/80 transition-all text-left group shrink-0"
           title="Clique para encerrar a sessão (Sair)"
           id="header-user-logout-pill"
         >
           <img
             src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
             alt={currentUser.fullName}
-            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/40 group-hover:ring-primary transition-all"
+            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/40 group-hover:ring-primary transition-all shrink-0"
           />
           <div className="hidden lg:block text-left">
             <div className="flex items-center gap-1">

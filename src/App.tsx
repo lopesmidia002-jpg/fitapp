@@ -63,7 +63,7 @@ export function App() {
   return (
     <div
       data-theme="dark"
-      className="min-h-screen flex flex-col transition-colors duration-200 dark bg-[#0B0D10] text-[#F5F7FA]"
+      className="min-h-screen flex flex-col transition-colors duration-200 dark bg-[#0B0D10] text-[#F5F7FA] overflow-x-hidden max-w-full"
     >
       {/* Top Header */}
       <Header
@@ -83,7 +83,7 @@ export function App() {
         )}
 
         {/* Main Content Area */}
-        <main className="flex-1 overflow-y-auto p-4 md:p-8 max-w-7xl mx-auto w-full">
+        <main className="flex-1 overflow-y-auto overflow-x-hidden p-3 sm:p-4 md:p-8 max-w-7xl mx-auto w-full">
           {/* SUPERADMIN VIEW */}
           {currentRole === 'superadmin' && (
             isAdminAuthenticated ? (

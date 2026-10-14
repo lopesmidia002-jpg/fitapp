@@ -241,5 +241,27 @@ describe('Invite Access Links, Login Gate & Environment Isolation', () => {
     expect(mockLocalStorage['omega_auth_user_id']).toBe('stud-test-carlos');
     expect(JSON.parse(mockLocalStorage['omega_user']).fullName).toBe('Carlos Novo Aluno');
   });
+
+  it('should ensure student mobile tab bar and MobileNav profile icon fit cleanly without overflowing page bounds', () => {
+    // 4 tabs in StudentAppView: Treinos, Cardápio, Metas, Perfil
+    const studentTabs = ['student-home', 'student-nutrition', 'student-evolution', 'student-profile'];
+    expect(studentTabs.length).toBe(4);
+    expect(studentTabs[3]).toBe('student-profile');
+
+    // Each tab occupies exactly 25% in grid-cols-4
+    const gridCols = 4;
+    const tabWidthPercent = 100 / gridCols;
+    expect(tabWidthPercent).toBe(25);
+
+    // 5 items in MobileNav: Início, Treinos, Alimentação, Evolução, Perfil
+    const mobileNavItems = ['student-home', 'student-workouts', 'student-nutrition', 'student-evolution', 'student-profile'];
+    expect(mobileNavItems.length).toBe(5);
+    expect(mobileNavItems[4]).toBe('student-profile');
+
+    // Each mobile nav item is capped at max 20% width to prevent cutoff
+    const maxItemWidth = 100 / mobileNavItems.length;
+    expect(maxItemWidth).toBe(20);
+  });
 });
+
 

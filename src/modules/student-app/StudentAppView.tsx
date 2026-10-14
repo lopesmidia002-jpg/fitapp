@@ -310,30 +310,31 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
   return (
     <div className="max-w-md mx-auto space-y-5 pb-20 md:pb-6">
       {/* Personalized Greeting Header */}
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-3">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2.5 sm:gap-3 min-w-0 flex-1">
           <img
             src={currentStudent?.avatarUrl || currentUser.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'}
             alt={currentStudent?.fullName || currentUser.fullName}
-            className="h-12 w-12 rounded-2xl object-cover ring-2 ring-primary/40 cursor-pointer hover:opacity-90 transition-opacity"
+            className="h-11 w-11 sm:h-12 sm:w-12 rounded-2xl object-cover ring-2 ring-primary/40 cursor-pointer hover:opacity-90 transition-opacity shrink-0"
             onClick={() => handleTabSelect('student-profile')}
             title="Ver meu perfil"
           />
-          <div>
-            <p className="text-xs text-muted font-medium">Bora treinar hoje?</p>
-            <h2 className="text-lg font-black text-foreground">{currentStudent?.fullName || currentUser.fullName}</h2>
+          <div className="min-w-0 flex-1 truncate">
+            <p className="text-[11px] sm:text-xs text-muted font-medium truncate">Bora treinar hoje?</p>
+            <h2 className="text-base sm:text-lg font-black text-foreground truncate">{currentStudent?.fullName || currentUser.fullName}</h2>
           </div>
         </div>
 
-        <div className="flex items-center gap-2">
-          <Badge variant="primary" size="sm" className="flex items-center gap-1.5 font-bold">
-            <Flame className="h-3.5 w-3.5 text-primary" />
-            <span>4 dias seguidos</span>
+        <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+          <Badge variant="primary" size="sm" className="flex items-center gap-1 sm:gap-1.5 font-bold px-2 sm:px-2.5 py-1 text-[11px] sm:text-xs shrink-0">
+            <Flame className="h-3.5 w-3.5 text-primary shrink-0" />
+            <span className="hidden xs:inline sm:inline">4 dias seguidos</span>
+            <span className="xs:hidden sm:hidden">4 dias</span>
           </Badge>
           <button
             type="button"
             onClick={logoutUser}
-            className="p-2 rounded-xl bg-surface border border-border text-muted hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+            className="p-2 rounded-xl bg-surface border border-border text-muted hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-xs shrink-0"
             title="Encerrar sessão e sair da conta (Logout)"
             id="student-logout-top-btn"
           >
@@ -344,34 +345,40 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
       </div>
 
       {/* Student App Navigation Tabs (Pill Bar) */}
-      <div className="flex items-center gap-1.5 p-1 bg-surface border border-border rounded-2xl text-xs font-semibold">
+      <div className="grid grid-cols-4 gap-1 p-1 bg-surface border border-border rounded-2xl text-xs font-semibold w-full">
         <button
           type="button"
           onClick={() => handleTabSelect('student-home')}
-          className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 transition-all min-w-0 text-center ${
             activeTab === 'student-home' || activeTab === 'student-workouts'
               ? 'bg-primary text-background font-black shadow-sm'
               : 'text-muted hover:text-foreground'
           }`}
+          title="Ver fichas de treinos"
+          id="student-tab-workouts-btn"
         >
-          <Dumbbell className="h-4 w-4" />
-          <span>Treinos</span>
+          <Dumbbell className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="truncate">Treinos</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabSelect('student-nutrition')}
-          className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 transition-all min-w-0 text-center ${
             activeTab === 'student-nutrition'
               ? 'bg-primary text-background font-black shadow-sm'
               : 'text-muted hover:text-foreground'
           }`}
+          title="Ver plano alimentar e cardápio"
+          id="student-tab-nutrition-btn"
         >
-          <Utensils className="h-4 w-4" />
-          <span>Meu Cardápio</span>
+          <Utensils className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="truncate">
+            <span className="hidden sm:inline">Meu </span>Cardápio
+          </span>
           {studentNutritionPlan && (
             <span
-              className={`text-[10px] px-1.5 py-0.5 rounded-full font-mono font-bold ${
+              className={`text-[9px] sm:text-[10px] px-1 py-0.2 rounded-full font-mono font-bold shrink-0 hidden xs:inline sm:inline ${
                 studentNutritionPlan.isHiddenForStudent
                   ? activeTab === 'student-nutrition'
                     ? 'bg-amber-400 text-dark-900'
@@ -381,7 +388,7 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
                   : 'bg-primary/20 text-primary'
               }`}
             >
-              {studentNutritionPlan.isHiddenForStudent ? 'Em Ajuste' : studentNutritionPlan.meals.length}
+              {studentNutritionPlan.isHiddenForStudent ? 'Ajuste' : studentNutritionPlan.meals.length}
             </span>
           )}
         </button>
@@ -389,28 +396,31 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
         <button
           type="button"
           onClick={() => handleTabSelect('student-evolution')}
-          className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 transition-all min-w-0 text-center ${
             activeTab === 'student-evolution'
               ? 'bg-primary text-background font-black shadow-sm'
               : 'text-muted hover:text-foreground'
           }`}
+          title="Ver metas e evolução corporal"
+          id="student-tab-evolution-btn"
         >
-          <TrendingUp className="h-4 w-4" />
-          <span>Metas</span>
+          <TrendingUp className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="truncate">Metas</span>
         </button>
 
         <button
           type="button"
           onClick={() => handleTabSelect('student-profile')}
-          className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+          className={`py-2 px-1 rounded-xl flex items-center justify-center gap-1 sm:gap-1.5 transition-all min-w-0 text-center ${
             activeTab === 'student-profile'
               ? 'bg-primary text-background font-black shadow-sm'
               : 'text-muted hover:text-foreground'
           }`}
           title="Meu perfil e configurações de conta"
+          id="student-tab-profile-btn"
         >
-          <User className="h-4 w-4" />
-          <span>Perfil</span>
+          <User className="h-3.5 w-3.5 sm:h-4 sm:w-4 shrink-0" />
+          <span className="truncate font-bold">Perfil</span>
         </button>
       </div>
 
