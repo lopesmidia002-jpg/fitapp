@@ -86,7 +86,7 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
               <span className="hidden sm:inline">Sair</span>
             </Button>
           </div>
-        ) : (currentRole === 'pro' && ((typeof window !== 'undefined' && sessionStorage.getItem('omega_auth_role') === 'pro') || currentUser.id.startsWith('trainer-'))) ? (
+        ) : currentRole === 'pro' ? (
           /* Dedicated Trainer Environment Isolation Badge & Logout */
           <div className="flex items-center gap-2">
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-primary/10 border border-primary/20 text-xs font-bold text-primary shadow-xs">
@@ -98,8 +98,9 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
               variant="outline"
               size="sm"
               onClick={logoutUser}
-              className="text-xs h-8 px-2.5 border-border hover:bg-card flex items-center gap-1.5 text-muted hover:text-foreground"
-              title="Encerrar sessão do treinador"
+              className="text-xs h-8 px-2.5 border-border hover:bg-card flex items-center gap-1.5 text-muted hover:text-rose-400 hover:border-rose-500/40 transition-colors"
+              title="Encerrar sessão do treinador e voltar ao login"
+              id="header-trainer-logout-btn"
             >
               <LogOut className="h-3.5 w-3.5" />
               <span className="hidden sm:inline">Sair</span>
@@ -112,7 +113,7 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
               type="button"
               onClick={() => switchRole('pro')}
               className={`flex items-center gap-1.5 px-3 py-1 rounded-lg font-semibold transition-all ${
-                currentRole === 'pro'
+                (currentRole as string) === 'pro'
                   ? 'bg-primary text-background font-bold shadow-sm'
                   : 'text-muted hover:text-foreground'
               }`}

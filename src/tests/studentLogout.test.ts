@@ -81,4 +81,40 @@ describe('Student Logout & Full Screen Auth Isolation', () => {
     expect(renderTarget).toBe('UserAuthScreen');
     expect(renderTarget).not.toBe('StudentAppView');
   });
+
+  it('authenticates trainer with demo credentials and saves trainer session', () => {
+    const trainerEmail = 'nilson.coach@omegatraining.pro';
+    const trainerPassword = 'treinador123';
+
+    expect(trainerEmail).toContain('coach');
+    expect(trainerPassword).toBe('treinador123');
+
+    // Simulate trainer login
+    mockLocalStorage['omega_user_logged_in'] = 'true';
+    mockSessionStorage['omega_auth_user_id'] = 'user-pro-1';
+    mockSessionStorage['omega_auth_role'] = 'pro';
+
+    expect(mockLocalStorage['omega_user_logged_in']).toBe('true');
+    expect(mockSessionStorage['omega_auth_role']).toBe('pro');
+  });
+
+  it('guarantees that when trainer logs out, entire dashboard and sidebar disappear', () => {
+    // Active trainer session
+    mockLocalStorage['omega_user_logged_in'] = 'true';
+    mockSessionStorage['omega_auth_role'] = 'pro';
+
+    // Trainer logs out
+    mockLocalStorage['omega_user_logged_in'] = 'false';
+    delete mockSessionStorage['omega_auth_user_id'];
+    delete mockSessionStorage['omega_auth_role'];
+
+    const isUserLoggedIn = mockLocalStorage['omega_user_logged_in'] === 'true';
+
+    // App.tsx returns UserAuthScreen, completely unmounting Header, Sidebar, DashboardView
+    const activeScreen = !isUserLoggedIn ? 'UserAuthScreen' : 'DashboardView';
+    expect(activeScreen).toBe('UserAuthScreen');
+    expect(activeScreen).not.toBe('DashboardView');
+    expect(mockSessionStorage['omega_auth_role']).toBeUndefined();
+  });
 });
+

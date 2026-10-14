@@ -10,7 +10,8 @@ import {
   Sparkles,
   Settings,
   X,
-  BookOpen
+  BookOpen,
+  LogOut
 } from 'lucide-react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../ui/Button';
@@ -23,7 +24,7 @@ export interface SidebarProps {
 }
 
 export function Sidebar({ currentTab, onSelectTab, isOpenMobile = false, onCloseMobile }: SidebarProps) {
-  const { insights, students } = useApp();
+  const { insights, students, currentUser, logoutUser } = useApp();
   const activeInsightsCount = insights.filter(i => i.status === 'active').length;
 
   const navigationItems = [
@@ -88,6 +89,32 @@ export function Sidebar({ currentTab, onSelectTab, isOpenMobile = false, onClose
             );
           })}
         </div>
+      </div>
+
+      {/* Trainer Session & Logout Footer */}
+      <div className="p-4 border-t border-border space-y-3 bg-surface/30">
+        <div className="flex items-center gap-2.5">
+          <img
+            src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
+            alt={currentUser.fullName}
+            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/40 shrink-0"
+          />
+          <div className="min-w-0 flex-1">
+            <p className="text-xs font-bold text-foreground truncate">{currentUser.fullName}</p>
+            <p className="text-[10px] text-muted truncate">Personal Trainer</p>
+          </div>
+        </div>
+
+        <button
+          type="button"
+          onClick={logoutUser}
+          className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-xl border border-rose-500/30 bg-rose-500/10 hover:bg-rose-500/20 text-rose-400 font-bold text-xs transition-colors shadow-xs"
+          title="Encerrar sessão e deslogar do painel"
+          id="sidebar-trainer-logout-btn"
+        >
+          <LogOut className="h-4 w-4" />
+          <span>Sair da Conta (Logout)</span>
+        </button>
       </div>
     </div>
   );

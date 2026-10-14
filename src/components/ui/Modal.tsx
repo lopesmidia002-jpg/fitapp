@@ -30,7 +30,7 @@ export function Modal({ isOpen, onClose, title, description, children, className
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-black/80 backdrop-blur-sm transition-opacity animate-in fade-in duration-200"
@@ -42,7 +42,7 @@ export function Modal({ isOpen, onClose, title, description, children, className
         role="dialog"
         aria-modal="true"
         className={cn(
-          "relative z-10 w-full max-w-lg bg-card border border-border rounded-2xl p-6 shadow-2xl transition-all animate-in zoom-in-95 duration-200",
+          "relative z-10 w-full max-w-lg my-auto max-h-[92vh] overflow-y-auto bg-card border border-border rounded-2xl p-5 sm:p-6 shadow-2xl transition-all animate-in zoom-in-95 duration-200",
           className
         )}
       >
