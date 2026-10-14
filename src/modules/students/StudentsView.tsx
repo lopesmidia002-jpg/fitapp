@@ -29,7 +29,8 @@ import {
   Utensils,
   Pencil,
   Save,
-  Check
+  Check,
+  RefreshCw,
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 
@@ -42,6 +43,10 @@ export function StudentsView() {
   const [selectedStudent, setSelectedStudent] = useState<Student | null>(null);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isCsvModalOpen, setIsCsvModalOpen] = useState(false);
+
+  // Save feedback state
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved'>('idle');
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   // New Student Form State
   const [newStudent, setNewStudent] = useState({
@@ -151,6 +156,8 @@ export function StudentsView() {
     e.preventDefault();
     if (!editingStudent) return;
 
+    setSaveStatus('saving');
+
     const updatedData = {
       fullName: editFormData.fullName,
       email: editFormData.email,
@@ -174,7 +181,17 @@ export function StudentsView() {
       } : null);
     }
 
-    setEditingStudent(null);
+    // Set saved confirmation state
+    setSaveStatus('saved');
+
+    // Keep visible so the user clearly sees confirmation before closing modal
+    setTimeout(() => {
+      const studentName = editFormData.fullName;
+      setEditingStudent(null);
+      setSaveStatus('idle');
+      setToastMessage(`As alterações no perfil de ${studentName} foram salvas com sucesso!`);
+      setTimeout(() => setToastMessage(null), 4500);
+    }, 1100);
   };
 
   // Filter students
@@ -190,11 +207,14 @@ export function StudentsView() {
     e.preventDefault();
     if (!newStudent.fullName || !newStudent.email) return;
 
+    const createdName = newStudent.fullName;
     addStudent({
       ...newStudent,
       avatarUrl: newStudent.avatarUrl || undefined,
     });
     setIsAddModalOpen(false);
+    setToastMessage(`Aluno ${createdName} cadastrado com sucesso!`);
+    setTimeout(() => setToastMessage(null), 4500);
     setNewStudent({
       fullName: '',
       email: '',
@@ -226,7 +246,33 @@ export function StudentsView() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 relative">
+      {/* Toast de Confirmação de Alterações Salvas */}
+      {toastMessage && (
+        <div className="fixed top-20 right-4 sm:right-8 z-50 p-4 rounded-2xl bg-card border-2 border-emerald-500/50 shadow-2xl flex items-center gap-3.5 text-sm text-foreground backdrop-blur-xl animate-in slide-in-from-top-4 duration-300 max-w-md">
+          <div className="p-2.5 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 shrink-0">
+            <CheckCircle2 className="h-5 w-5" />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="font-black text-foreground flex items-center gap-1.5">
+              <span>Alterações Salvas</span>
+              <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/30">
+                Confirmado
+              </span>
+            </p>
+            <p className="text-xs text-muted mt-0.5 break-words">{toastMessage}</p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setToastMessage(null)}
+            className="p-1 rounded-lg text-muted hover:text-foreground hover:bg-surface/80 transition-colors shrink-0"
+            title="Fechar aviso"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Top Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
@@ -697,13 +743,52 @@ export function StudentsView() {
               />
             </div>
 
+            {/* Visual confirmation alert when saved */}
+            {saveStatus === 'saved' && (
+              <div className="p-3.5 rounded-xl bg-emerald-500/15 border border-emerald-500/30 text-emerald-400 text-xs font-bold flex items-center gap-2 animate-in fade-in slide-in-from-bottom-2">
+                <CheckCircle2 className="h-4 w-4 shrink-0 text-emerald-400" />
+                <span>✓ Alterações salvas com sucesso no perfil de {editFormData.fullName}!</span>
+              </div>
+            )}
+
             <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <Button type="button" variant="ghost" onClick={() => setEditingStudent(null)}>
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => {
+                  setEditingStudent(null);
+                  setSaveStatus('idle');
+                }}
+                disabled={saveStatus === 'saving'}
+              >
                 Cancelar
               </Button>
-              <Button type="submit" variant="primary" className="flex items-center gap-1.5">
-                <Save className="h-4 w-4" />
-                <span>Salvar Alterações</span>
+              <Button
+                type="submit"
+                variant="primary"
+                disabled={saveStatus === 'saving'}
+                className={`flex items-center justify-center gap-2 font-bold transition-all duration-200 min-w-[170px] ${
+                  saveStatus === 'saved'
+                    ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                    : 'shadow-neon-sm'
+                }`}
+              >
+                {saveStatus === 'saving' ? (
+                  <>
+                    <RefreshCw className="h-4 w-4 animate-spin text-background" />
+                    <span>Salvando alterações...</span>
+                  </>
+                ) : saveStatus === 'saved' ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-white" />
+                    <span>✓ Salvo com Sucesso!</span>
+                  </>
+                ) : (
+                  <>
+                    <Save className="h-4 w-4" />
+                    <span>Salvar Alterações</span>
+                  </>
+                )}
               </Button>
             </div>
           </form>

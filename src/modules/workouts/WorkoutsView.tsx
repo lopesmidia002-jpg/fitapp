@@ -191,6 +191,8 @@ export function WorkoutsView() {
 
   // New Workout Plan Modal
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isPlanSaved, setIsPlanSaved] = useState(false);
+  const [isExerciseSaved, setIsExerciseSaved] = useState(false);
   const [selectedStudentId, setSelectedStudentId] = useState(students[0]?.id || '');
   const [planTitle, setPlanTitle] = useState('Treino Personalizado de Hipertrofia');
   const [planSplit, setPlanSplit] = useState<'A' | 'B' | 'C' | 'D' | 'Fullbody'>('A');
@@ -267,26 +269,33 @@ export function WorkoutsView() {
       validUntil: new Date(Date.now() + 60 * 24 * 3600 * 1000).toISOString().split('T')[0],
     });
 
-    setIsPlanModalOpen(false);
-    alert('Ficha de treino montada com vídeos de execução e enviada com sucesso para o aluno!');
+    setIsPlanSaved(true);
+    setTimeout(() => {
+      setIsPlanSaved(false);
+      setIsPlanModalOpen(false);
+    }, 1100);
   };
 
   const handleCreateCustomExercise = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newExercise.name) return;
     addExercise(newExercise);
-    setIsExerciseModalOpen(false);
-    setNewExercise({
-      name: '',
-      muscleGroup: 'Peitoral',
-      equipment: 'Halteres',
-      instructions: '',
-      precautions: '',
-      targetSetsDefault: 3,
-      targetRepsDefault: '10 a 12',
-      videoUrl: '',
-      videoDuration: '',
-    });
+    setIsExerciseSaved(true);
+    setTimeout(() => {
+      setIsExerciseSaved(false);
+      setIsExerciseModalOpen(false);
+      setNewExercise({
+        name: '',
+        muscleGroup: 'Peitoral',
+        equipment: 'Halteres',
+        instructions: '',
+        precautions: '',
+        targetSetsDefault: 3,
+        targetRepsDefault: '10 a 12',
+        videoUrl: '',
+        videoDuration: '',
+      });
+    }, 1000);
   };
 
   const handleOpenExerciseModal = () => {
@@ -876,8 +885,26 @@ export function WorkoutsView() {
             <Button type="button" variant="ghost" onClick={() => setIsPlanModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
-              Salvar e Publicar Ficha
+            <Button
+              type="submit"
+              variant="primary"
+              className={`flex items-center gap-1.5 font-bold transition-all duration-200 ${
+                isPlanSaved
+                  ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                  : 'shadow-neon-sm'
+              }`}
+            >
+              {isPlanSaved ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <span>✓ Ficha Salva com Sucesso!</span>
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  <span>Salvar e Publicar Ficha</span>
+                </>
+              )}
             </Button>
           </div>
         </form>
@@ -1156,8 +1183,23 @@ export function WorkoutsView() {
             <Button type="button" variant="ghost" onClick={() => setIsExerciseModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
-              Cadastrar Exercício
+            <Button
+              type="submit"
+              variant="primary"
+              className={`flex items-center gap-1.5 font-bold transition-all duration-200 ${
+                isExerciseSaved
+                  ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                  : 'shadow-neon-sm'
+              }`}
+            >
+              {isExerciseSaved ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <span>✓ Exercício Cadastrado!</span>
+                </>
+              ) : (
+                'Cadastrar Exercício'
+              )}
             </Button>
           </div>
         </form>

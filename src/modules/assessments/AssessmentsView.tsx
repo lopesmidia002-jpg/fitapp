@@ -127,6 +127,7 @@ export function AssessmentsView() {
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [appliedReportFeedback, setAppliedReportFeedback] = useState(false);
   const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+  const [isAssessmentSaved, setIsAssessmentSaved] = useState(false);
 
   const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
@@ -250,8 +251,11 @@ export function AssessmentsView() {
     };
     addAssessment(finalAssessment);
     setSelectedStudentId(newAssessment.studentId);
-    setIsModalOpen(false);
-    alert(`Avaliação física registrada com sucesso para ${students.find(s => s.id === newAssessment.studentId)?.fullName || 'o aluno'}!`);
+    setIsAssessmentSaved(true);
+    setTimeout(() => {
+      setIsAssessmentSaved(false);
+      setIsModalOpen(false);
+    }, 1100);
   };
 
   const toggleExpandCard = (id: string) => {
@@ -1047,8 +1051,23 @@ export function AssessmentsView() {
             <Button type="button" variant="ghost" onClick={() => setIsModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
-              Salvar Avaliação
+            <Button
+              type="submit"
+              variant="primary"
+              className={`flex items-center gap-1.5 font-bold transition-all duration-200 ${
+                isAssessmentSaved
+                  ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                  : 'shadow-neon-sm'
+              }`}
+            >
+              {isAssessmentSaved ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <span>✓ Avaliação Salva com Sucesso!</span>
+                </>
+              ) : (
+                <span>Salvar Avaliação</span>
+              )}
             </Button>
           </div>
         </form>

@@ -42,6 +42,7 @@ export function NutritionView({ onNavigate }: NutritionViewProps = {}) {
   const [selectedStudentId, setSelectedStudentId] = useState<string>(() => students[0]?.id || 'stud-1');
   const [searchStudent, setSearchStudent] = useState('');
   const [isPlanModalOpen, setIsPlanModalOpen] = useState(false);
+  const [isPlanSaved, setIsPlanSaved] = useState(false);
 
   // Share Menu Modal & States
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -238,8 +239,11 @@ Foco total na disciplina e ótimos treinos! 🔥
     });
 
     setSelectedStudentId(newPlanForm.studentId);
-    setIsPlanModalOpen(false);
-    alert(`Plano nutricional individualizado salvo com sucesso para ${targetStudent?.fullName || 'o aluno'}!`);
+    setIsPlanSaved(true);
+    setTimeout(() => {
+      setIsPlanSaved(false);
+      setIsPlanModalOpen(false);
+    }, 1100);
   };
 
   return (
@@ -800,8 +804,19 @@ Foco total na disciplina e ótimos treinos! 🔥
             <Button type="button" variant="ghost" onClick={() => setIsPlanModalOpen(false)}>
               Cancelar
             </Button>
-            <Button type="submit" variant="primary">
-              Salvar e Atribuir Plano
+            <Button
+              type="submit"
+              variant="primary"
+              className={isPlanSaved ? "bg-emerald-600 hover:bg-emerald-500 text-white border-emerald-500 flex items-center gap-1.5" : ""}
+            >
+              {isPlanSaved ? (
+                <>
+                  <CheckCircle2 className="h-4 w-4 text-white" />
+                  <span>✓ Plano Salvo com Sucesso!</span>
+                </>
+              ) : (
+                'Salvar e Atribuir Plano'
+              )}
             </Button>
           </div>
         </form>

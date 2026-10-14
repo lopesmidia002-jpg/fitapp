@@ -145,6 +145,7 @@ export function TacoDietBuilderView({ onNavigate }: TacoDietBuilderViewProps) {
 
   // Success Save Toast / Modal
   const [saveSuccessToast, setSaveSuccessToast] = useState<string | null>(null);
+  const [isDietSaved, setIsDietSaved] = useState(false);
 
   // Real-time macro calculations from current meals
   const totalCalories = meals.reduce((sum, m) => sum + m.items.reduce((s, i) => s + (i.calories || 0), 0), 0);
@@ -249,9 +250,13 @@ export function TacoDietBuilderView({ onNavigate }: TacoDietBuilderViewProps) {
     };
 
     addNutritionPlan(planToSave);
+    setIsDietSaved(true);
     const visNotice = isHiddenForStudent ? ' (Status: Oculta para o aluno)' : ' (Status: Visível no App)';
     setSaveSuccessToast(`Dieta individual de ${selectedStudent.fullName} salva e sincronizada com sucesso!${visNotice}`);
-    setTimeout(() => setSaveSuccessToast(null), 4000);
+    setTimeout(() => {
+      setIsDietSaved(false);
+      setSaveSuccessToast(null);
+    }, 4000);
   };
 
   // Quick preset macro goals
@@ -342,10 +347,23 @@ export function TacoDietBuilderView({ onNavigate }: TacoDietBuilderViewProps) {
             variant="primary"
             size="sm"
             onClick={() => handleSaveIndividualDiet()}
-            className="flex items-center gap-1.5 shadow-neon-sm"
+            className={`flex items-center gap-1.5 transition-all duration-200 ${
+              isDietSaved
+                ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                : 'shadow-neon-sm'
+            }`}
           >
-            <Check className="h-4 w-4" />
-            <span>Salvar Dieta do Aluno</span>
+            {isDietSaved ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-white" />
+                <span>✓ Dieta Salva com Sucesso!</span>
+              </>
+            ) : (
+              <>
+                <Check className="h-4 w-4" />
+                <span>Salvar Dieta do Aluno</span>
+              </>
+            )}
           </Button>
         </div>
       </div>
@@ -774,13 +792,26 @@ export function TacoDietBuilderView({ onNavigate }: TacoDietBuilderViewProps) {
                 variant="primary"
                 size="lg"
                 onClick={() => handleSaveIndividualDiet()}
-                className="flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 shadow-neon font-bold h-auto min-h-[42px] sm:h-12 py-2 sm:py-0 px-3 sm:px-6 text-xs sm:text-base leading-tight text-center"
+                className={`flex-1 sm:flex-initial flex items-center justify-center gap-1.5 sm:gap-2 font-bold h-auto min-h-[42px] sm:h-12 py-2 sm:py-0 px-3 sm:px-6 text-xs sm:text-base leading-tight text-center transition-all duration-200 ${
+                  isDietSaved
+                    ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                    : 'shadow-neon'
+                }`}
               >
-                <Check className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
-                <span className="whitespace-nowrap sm:whitespace-normal">
-                  <span className="hidden sm:inline">Salvar e Atualizar Dieta</span>
-                  <span className="sm:hidden">Salvar Dieta</span>
-                </span>
+                {isDietSaved ? (
+                  <>
+                    <CheckCircle2 className="w-4 h-4 sm:w-5 sm:h-5 shrink-0 text-white" />
+                    <span>✓ Dieta Salva com Sucesso!</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4 sm:w-5 sm:h-5 shrink-0" />
+                    <span className="whitespace-nowrap sm:whitespace-normal">
+                      <span className="hidden sm:inline">Salvar e Atualizar Dieta</span>
+                      <span className="sm:hidden">Salvar Dieta</span>
+                    </span>
+                  </>
+                )}
               </Button>
             </div>
           </div>

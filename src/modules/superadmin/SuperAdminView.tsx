@@ -463,6 +463,7 @@ Bons treinos! 🔥`;
     maxStudents: organization.maxStudents || 50,
   });
   const [settingsToast, setSettingsToast] = useState<string | null>(null);
+  const [isSettingsSaved, setIsSettingsSaved] = useState(false);
 
   const handleSaveSettings = (e: React.FormEvent) => {
     e.preventDefault();
@@ -472,8 +473,12 @@ Bons treinos! 🔥`;
       maxStudents: Number(settingsForm.maxStudents),
     });
     addAuditLog('ORGANIZATION_SETTINGS_UPDATED', `${settingsForm.orgName} (Parâmetros Globais da Empresa)`);
+    setIsSettingsSaved(true);
     setSettingsToast('Configurações salvas e aplicadas com sucesso!');
-    setTimeout(() => setSettingsToast(null), 3500);
+    setTimeout(() => {
+      setIsSettingsSaved(false);
+      setSettingsToast(null);
+    }, 3500);
   };
 
   const getTrainerAccessLink = (trainer: Trainer) => {
@@ -1877,9 +1882,26 @@ Bons atendimentos e sucesso! 🚀`;
               <span className="text-xs text-muted">
                 As alterações de marca e parâmetros são refletidas instantaneamente em toda a plataforma.
               </span>
-              <Button type="submit" variant="primary" className="shadow-neon-sm flex items-center gap-1.5 font-bold px-6">
-                <Check className="h-4 w-4" />
-                <span>Salvar Configurações</span>
+              <Button
+                type="submit"
+                variant="primary"
+                className={`flex items-center gap-1.5 font-bold px-6 transition-all duration-200 ${
+                  isSettingsSaved
+                    ? 'bg-emerald-600 hover:bg-emerald-600 text-white ring-2 ring-emerald-400/50 shadow-lg shadow-emerald-500/30'
+                    : 'shadow-neon-sm'
+                }`}
+              >
+                {isSettingsSaved ? (
+                  <>
+                    <CheckCircle2 className="h-4 w-4 text-white" />
+                    <span>✓ Configurações Salvas com Sucesso!</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-4 w-4" />
+                    <span>Salvar Configurações</span>
+                  </>
+                )}
               </Button>
             </div>
           </form>
