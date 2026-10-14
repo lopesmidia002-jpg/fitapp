@@ -6,6 +6,7 @@ import { Badge } from '../../components/ui/Badge';
 import { Modal } from '../../components/ui/Modal';
 import { SAAS_PLANS } from '../../services/mockData';
 import { formatCurrency, formatDate } from '../../lib/utils';
+import { CheckoutModal } from '../../components/billing/CheckoutModal';
 import {
   CreditCard,
   Check,
@@ -241,37 +242,27 @@ export function BillingView() {
         </Card>
       </div>
 
-      {/* Checkout Modal */}
-      <Modal
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-        title="Confirmar Alteração de Plano"
-        description="Atualização imediata com cálculo proporcional de faturamento."
-      >
-        <div className="space-y-4">
-          <div className="p-4 rounded-xl bg-surface border border-border flex items-center justify-between">
-            <div>
-              <p className="text-xs text-muted uppercase font-bold">Novo Plano Selecionado</p>
-              <p className="text-lg font-black text-foreground uppercase">{selectedPlanForCheckout}</p>
-            </div>
-            <p className="text-xl font-black text-primary">
-              {formatCurrency(SAAS_PLANS.find(p => p.id === selectedPlanForCheckout)?.priceMonthly || 0)}/mês
-            </p>
-          </div>
-
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs text-foreground flex items-start gap-2">
-            <ShieldCheck className="h-4 w-4 text-primary shrink-0 mt-0.5" />
-            <span>Cobrança processada com criptografia de ponta a ponta. Você pode cancelar ou alterar a qualquer momento sem fidelidade.</span>
-          </div>
-
-          <div className="flex justify-end gap-2 pt-2 border-t border-border">
-            <Button variant="ghost" onClick={() => setIsCheckoutOpen(false)}>Cancelar</Button>
-            <Button variant="primary" onClick={confirmPlanChange}>
-              Confirmar Assinatura
-            </Button>
-          </div>
-        </div>
-      </Modal>
+      {/* Realistic Interactive Checkout Modal (PIX & Card) */}
+      {selectedPlanForCheckout && (
+        <CheckoutModal
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+          plan={{
+            id: selectedPlanForCheckout,
+            name: SAAS_PLANS.find(p => p.id === selectedPlanForCheckout)?.name || 'Plano',
+            priceMonthly: SAAS_PLANS.find(p => p.id === selectedPlanForCheckout)?.priceMonthly || 0,
+            maxStudents: SAAS_PLANS.find(p => p.id === selectedPlanForCheckout)?.maxStudents || 50,
+          }}
+          onPaymentSuccess={(result) => {
+            const targetPlan = SAAS_PLANS.find(p => p.id === selectedPlanForCheckout)!;
+            updateOrganization({
+              planId: selectedPlanForCheckout,
+              maxStudents: targetPlan.maxStudents,
+            });
+          }}
+        />
+      )}
     </div>
   );
 }
+

@@ -27,8 +27,14 @@ import {
   Sparkles,
   Dumbbell,
   Apple,
-  HeartPulse
+  HeartPulse,
+  Camera,
+  Image as ImageIcon,
+  UploadCloud,
+  Trash2
 } from 'lucide-react';
+import { storageService } from '../../lib/supabase';
+
 import {
   ResponsiveContainer,
   LineChart,
@@ -114,11 +120,41 @@ export function AssessmentsView() {
     armsCm: 30,
     thighsCm: 56,
     proObservations: 'Boa adesão aos treinos, evolução muscular evidente.',
+    photosUrls: [],
   });
 
   // UI state for cards and feedback
   const [expandedCardId, setExpandedCardId] = useState<string | null>(null);
   const [appliedReportFeedback, setAppliedReportFeedback] = useState(false);
+  const [isUploadingPhoto, setIsUploadingPhoto] = useState(false);
+
+  const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    setIsUploadingPhoto(true);
+
+    try {
+      const uploadPromises = Array.from(files).map(file => storageService.uploadFile('assessments', file));
+      const urls = await Promise.all(uploadPromises);
+      setNewAssessment(prev => ({
+        ...prev,
+        photosUrls: [...(prev.photosUrls || []), ...urls],
+      }));
+    } catch (err) {
+      console.error('Error uploading assessment photos:', err);
+    } finally {
+      setIsUploadingPhoto(false);
+      e.target.value = '';
+    }
+  };
+
+  const removePhoto = (index: number) => {
+    setNewAssessment(prev => ({
+      ...prev,
+      photosUrls: (prev.photosUrls || []).filter((_, i) => i !== index),
+    }));
+  };
+
 
   // Student in the modal form
   const currentModalStudent = students.find(s => s.id === newAssessment.studentId) || selectedStudent;
@@ -565,10 +601,36 @@ export function AssessmentsView() {
                       <div>Braço: <strong className="text-foreground">{item.armsCm || '-'} cm</strong></div>
                     </div>
 
+                    {/* Photos Preview if available */}
+                    {item.photosUrls && item.photosUrls.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <span className="text-[10px] uppercase font-bold text-muted flex items-center gap-1">
+                          <Camera className="h-3 w-3 text-primary" /> Fotos de Evolução ({item.photosUrls.length})
+                        </span>
+                        <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+                          {item.photosUrls.map((photo, pIdx) => (
+                            <a
+                              key={pIdx}
+                              href={photo}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="relative rounded-lg overflow-hidden border border-border aspect-[3/4] group bg-card"
+                            >
+                              <img src={photo} alt={`Evolução ${pIdx + 1}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform" />
+                              <span className="absolute bottom-1 left-1 text-[9px] font-bold bg-dark-900/80 px-1 rounded text-white">
+                                #{pIdx + 1}
+                              </span>
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Pro observations */}
                     <div className="text-xs text-muted leading-relaxed p-2.5 rounded-xl bg-surface/30 border border-border whitespace-pre-line">
                       <strong className="text-foreground">Parecer:</strong> {item.proObservations}
                     </div>
+
 
                     {/* Expandable Technical Recommendations */}
                     <button
@@ -911,9 +973,65 @@ export function AssessmentsView() {
             </div>
           </div>
 
+          {/* Registro Fotográfico da Avaliação Física */}
+          <div className="space-y-2 p-3.5 rounded-xl bg-surface border border-border">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+              <div>
+                <label className="text-xs font-bold text-foreground flex items-center gap-1.5">
+                  <Camera className="h-4 w-4 text-primary" />
+                  <span>Fotos de Evolução (Frente, Costas e Perfil)</span>
+                </label>
+                <p className="text-[11px] text-muted">
+                  Anexe fotos para comparativo de antes/depois e acompanhamento postural
+                </p>
+              </div>
+
+              <label className="cursor-pointer shrink-0">
+                <input
+                  type="file"
+                  multiple
+                  accept="image/*"
+                  onChange={handlePhotoUpload}
+                  className="hidden"
+                />
+                <span className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-bold rounded-lg bg-primary text-background hover:bg-primary-hover shadow-sm transition-all cursor-pointer">
+                  <UploadCloud className="h-3.5 w-3.5" />
+                  <span>{isUploadingPhoto ? 'Enviando...' : 'Anexar Fotos'}</span>
+                </span>
+              </label>
+            </div>
+
+            {/* Preview of Uploaded Photos */}
+            {newAssessment.photosUrls && newAssessment.photosUrls.length > 0 ? (
+              <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pt-1">
+                {newAssessment.photosUrls.map((url, idx) => (
+                  <div key={idx} className="relative group rounded-xl overflow-hidden border border-border bg-card aspect-[3/4]">
+                    <img src={url} alt={`Foto ${idx + 1}`} className="w-full h-full object-cover" />
+                    <button
+                      type="button"
+                      onClick={() => removePhoto(idx)}
+                      className="absolute top-1 right-1 p-1 rounded-md bg-rose-600/90 text-white hover:bg-rose-600 transition-colors shadow-sm"
+                      title="Remover foto"
+                    >
+                      <Trash2 className="h-3 w-3" />
+                    </button>
+                    <span className="absolute bottom-1 left-1 text-[9px] font-bold bg-dark-900/80 px-1.5 py-0.5 rounded text-white">
+                      Foto {idx + 1}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="border border-dashed border-border rounded-xl p-3 text-center text-xs text-muted">
+                Nenhuma foto anexada nesta avaliação. Clique em "Anexar Fotos" acima para adicionar.
+              </div>
+            )}
+          </div>
+
           {/* Campo de Parecer Técnico e Recomendações (Multilinha) */}
           <div className="space-y-1.5">
             <label className="text-xs font-bold text-foreground">
+
               Parecer Técnico e Recomendações *
             </label>
             <textarea

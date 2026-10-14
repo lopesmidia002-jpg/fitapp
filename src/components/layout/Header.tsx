@@ -1,9 +1,11 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../ui/Button';
-import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock } from 'lucide-react';
+import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock, LogIn } from 'lucide-react';
 import { UserRole } from '../../types';
 import { AdminLoginModal } from '../auth/AdminLoginModal';
+import { UserAuthModal } from '../auth/UserAuthModal';
+
 
 export interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -23,8 +25,10 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
   } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
+  const [isUserAuthModalOpen, setIsUserAuthModalOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
+
 
   return (
     <header className="h-16 border-b border-border bg-surface/80 backdrop-blur-md sticky top-0 z-30 px-4 md:px-8 flex items-center justify-between">
@@ -198,18 +202,30 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
           )}
         </div>
 
-        {/* Current User Pill */}
-        <div className="flex items-center gap-2 pl-2 border-l border-border">
+        {/* Current User Pill & Auth Launcher */}
+        <button
+          type="button"
+          onClick={() => setIsUserAuthModalOpen(true)}
+          className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border-l border-border hover:bg-card/80 transition-all text-left group"
+          title="Clique para entrar, criar conta ou trocar de usuário"
+        >
           <img
             src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
             alt={currentUser.fullName}
-            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/40"
+            className="h-8 w-8 rounded-full object-cover ring-2 ring-primary/40 group-hover:ring-primary transition-all"
           />
           <div className="hidden lg:block text-left">
-            <p className="text-xs font-bold text-foreground leading-tight">{currentUser.fullName}</p>
-            <p className="text-[10px] text-muted capitalize">{currentUser.role === 'pro' ? 'Personal Trainer' : currentUser.role}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
+                {currentUser.fullName}
+              </p>
+              <LogIn className="h-3 w-3 text-muted group-hover:text-primary transition-colors" />
+            </div>
+            <p className="text-[10px] text-muted capitalize">
+              {currentUser.role === 'pro' ? 'Personal Trainer' : currentUser.role}
+            </p>
           </div>
-        </div>
+        </button>
       </div>
 
       <AdminLoginModal
@@ -217,6 +233,12 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
         onClose={() => setIsAdminLoginModalOpen(false)}
         onSuccess={() => switchRole('superadmin')}
       />
+
+      <UserAuthModal
+        isOpen={isUserAuthModalOpen}
+        onClose={() => setIsUserAuthModalOpen(false)}
+      />
     </header>
   );
 }
+

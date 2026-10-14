@@ -90,7 +90,13 @@ interface AppContextType {
   loginAdmin: (loginInput: string, passwordInput: string) => boolean;
   logoutAdmin: () => void;
   updateAdminPassword: (newPassword: string) => void;
+  // User Authentication (Students & Trainers)
+  isUserLoggedIn: boolean;
+  loginUser: (email: string, password?: string) => { success: boolean; error?: string };
+  registerUser: (userData: { fullName: string; email: string; password?: string; role: 'student' | 'pro' }) => { success: boolean; error?: string };
+  logoutUser: () => void;
 }
+
 
 const sanitizeEmail = (email: string | undefined): string => {
   if (!email) return '';
@@ -555,6 +561,145 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     });
   };
 
+  const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(() => {
+    try {
+      return localStorage.getItem('omega_user_logged_in') === 'true';
+    } catch {
+      return true;
+    }
+  });
+
+  const loginUser = (emailInput: string, passwordInput?: string): { success: boolean; error?: string } => {
+    const cleanEmail = emailInput.trim().toLowerCase();
+    
+    // Check if it's admin
+    if (cleanEmail === adminCredentials.email.toLowerCase() || cleanEmail === 'admin@omegatraining.pro' || cleanEmail === 'admin') {
+      const ok = loginAdmin(cleanEmail, passwordInput || '');
+      if (ok) {
+        setIsUserLoggedIn(true);
+        try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+        return { success: true };
+      }
+      return { success: false, error: 'Senha incorreta para Administrador.' };
+    }
+
+    // Check trainers
+    const matchingTrainer = trainers.find(t => t.email.toLowerCase() === cleanEmail) ||
+      INITIAL_USERS.find(u => u.role === 'pro' && u.email.toLowerCase() === cleanEmail);
+    if (matchingTrainer) {
+      const userObj: UserProfile = {
+        id: matchingTrainer.id,
+        email: matchingTrainer.email,
+        fullName: matchingTrainer.fullName,
+        role: 'pro',
+        organizationId: matchingTrainer.organizationId,
+        avatarUrl: matchingTrainer.avatarUrl,
+        phone: matchingTrainer.phone,
+      };
+      setCurrentUser(userObj);
+      setIsUserLoggedIn(true);
+      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      return { success: true };
+    }
+
+    // Check students
+    const matchingStudent = students.find(s => s.email.toLowerCase() === cleanEmail) ||
+      INITIAL_USERS.find(u => u.role === 'student' && u.email.toLowerCase() === cleanEmail);
+    if (matchingStudent) {
+      const userObj: UserProfile = {
+        id: matchingStudent.id,
+        email: matchingStudent.email,
+        fullName: matchingStudent.fullName,
+        role: 'student',
+        organizationId: matchingStudent.organizationId,
+        avatarUrl: matchingStudent.avatarUrl,
+        phone: matchingStudent.phone,
+      };
+      setCurrentUser(userObj);
+      setIsUserLoggedIn(true);
+      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      return { success: true };
+    }
+
+    // Dynamic user login fallback
+    if (cleanEmail.includes('@')) {
+      const isCoach = cleanEmail.includes('coach') || cleanEmail.includes('personal') || cleanEmail.includes('treinador');
+      const role: UserRole = isCoach ? 'pro' : 'student';
+      const userObj: UserProfile = {
+        id: `user-${Date.now()}`,
+        email: cleanEmail,
+        fullName: cleanEmail.split('@')[0].replace(/[._-]/g, ' ').replace(/\b\w/g, l => l.toUpperCase()),
+        role,
+        organizationId: organization.id,
+        avatarUrl: role === 'pro'
+          ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+          : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+      };
+      setCurrentUser(userObj);
+      setIsUserLoggedIn(true);
+      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      return { success: true };
+    }
+
+    return { success: false, error: 'Usuário não encontrado. Verifique seu e-mail ou crie uma conta.' };
+  };
+
+  const registerUser = (userData: { fullName: string; email: string; password?: string; role: 'student' | 'pro' }): { success: boolean; error?: string } => {
+    const cleanEmail = userData.email.trim().toLowerCase();
+    if (!cleanEmail || !userData.fullName) {
+      return { success: false, error: 'Por favor, preencha todos os campos obrigatórios.' };
+    }
+
+    const newUser: UserProfile = {
+      id: `user-${Date.now()}`,
+      email: cleanEmail,
+      fullName: userData.fullName.trim(),
+      role: userData.role,
+      organizationId: organization.id,
+      avatarUrl: userData.role === 'pro'
+        ? 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'
+        : 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
+    };
+
+    setCurrentUser(newUser);
+    setIsUserLoggedIn(true);
+    try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+
+    if (userData.role === 'student') {
+      setStudents(prev => [
+        {
+          id: newUser.id,
+          organizationId: organization.id,
+          proId: 'user-pro-1',
+          fullName: newUser.fullName,
+          email: newUser.email,
+          phone: '',
+          status: 'active',
+          goal: 'Hipertrofia e Condicionamento',
+          currentWeightKg: 70,
+          targetWeightKg: 68,
+          heightCm: 172,
+          joinDate: new Date().toISOString().split('T')[0],
+          adherenceRate: 100,
+          completedWorkouts: 0,
+          lastActive: new Date().toISOString(),
+          avatarUrl: newUser.avatarUrl,
+        },
+        ...prev,
+      ]);
+
+    }
+
+    return { success: true };
+  };
+
+  const logoutUser = () => {
+    setIsUserLoggedIn(false);
+    try { localStorage.removeItem('omega_user_logged_in'); } catch {}
+    const defaultStudent = INITIAL_USERS.find(u => u.role === 'student') || INITIAL_USERS[0];
+    setCurrentUser(defaultStudent);
+  };
+
   const switchRole = (role: UserRole) => {
     if (role === 'superadmin' && !isAdminAuthenticated) {
       return;
@@ -565,6 +710,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
     setCurrentUser(targetUser);
   };
+
 
   const updateOrganization = (updates: Partial<Organization>) => {
     setOrganization(prev => ({ ...prev, ...updates }));
@@ -886,8 +1032,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         loginAdmin,
         logoutAdmin,
         updateAdminPassword,
+        isUserLoggedIn,
+        loginUser,
+        registerUser,
+        logoutUser,
       }}
     >
+
       {children}
     </AppContext.Provider>
   );
