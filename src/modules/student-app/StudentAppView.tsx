@@ -31,7 +31,11 @@ import {
   Scale,
   EyeOff,
   MessageSquare,
-  Film
+  Film,
+  LogOut,
+  User,
+  Mail,
+  Phone
 } from 'lucide-react';
 import {
   ResponsiveContainer,
@@ -70,7 +74,8 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
     toggleGoal,
     nutritionPlans,
     assessments,
-    theme
+    theme,
+    logoutUser
   } = useApp();
 
   const isDark = theme === 'dark';
@@ -310,7 +315,9 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
           <img
             src={currentStudent?.avatarUrl || currentUser.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'}
             alt={currentStudent?.fullName || currentUser.fullName}
-            className="h-12 w-12 rounded-2xl object-cover ring-2 ring-primary/40"
+            className="h-12 w-12 rounded-2xl object-cover ring-2 ring-primary/40 cursor-pointer hover:opacity-90 transition-opacity"
+            onClick={() => handleTabSelect('student-profile')}
+            title="Ver meu perfil"
           />
           <div>
             <p className="text-xs text-muted font-medium">Bora treinar hoje?</p>
@@ -318,10 +325,22 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
           </div>
         </div>
 
-        <Badge variant="primary" size="sm" className="flex items-center gap-1.5 font-bold">
-          <Flame className="h-3.5 w-3.5 text-primary" />
-          <span>4 dias seguidos</span>
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="primary" size="sm" className="flex items-center gap-1.5 font-bold">
+            <Flame className="h-3.5 w-3.5 text-primary" />
+            <span>4 dias seguidos</span>
+          </Badge>
+          <button
+            type="button"
+            onClick={logoutUser}
+            className="p-2 rounded-xl bg-surface border border-border text-muted hover:text-rose-400 hover:border-rose-500/40 hover:bg-rose-500/10 transition-all flex items-center gap-1.5 text-xs font-semibold shadow-xs"
+            title="Encerrar sessão e sair da conta (Logout)"
+            id="student-logout-top-btn"
+          >
+            <LogOut className="h-4 w-4" />
+            <span className="hidden sm:inline">Sair</span>
+          </button>
+        </div>
       </div>
 
       {/* Student App Navigation Tabs (Pill Bar) */}
@@ -378,6 +397,20 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
         >
           <TrendingUp className="h-4 w-4" />
           <span>Metas</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={() => handleTabSelect('student-profile')}
+          className={`flex-1 py-2 px-3 rounded-xl flex items-center justify-center gap-1.5 transition-all ${
+            activeTab === 'student-profile'
+              ? 'bg-primary text-background font-black shadow-sm'
+              : 'text-muted hover:text-foreground'
+          }`}
+          title="Meu perfil e configurações de conta"
+        >
+          <User className="h-4 w-4" />
+          <span>Perfil</span>
         </button>
       </div>
 
@@ -635,7 +668,7 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
       )}
 
       {/* ================= TREINOS / HOME ================= */}
-      {activeTab !== 'student-nutrition' && activeTab !== 'student-evolution' && (
+      {activeTab !== 'student-nutrition' && activeTab !== 'student-evolution' && activeTab !== 'student-profile' && (
         <>
           {/* Rest Countdown Timer Active Float Banner */}
       {restRemaining !== null && (
@@ -1388,6 +1421,108 @@ export function StudentAppView({ currentTab, onSelectTab }: StudentAppViewProps)
               </p>
             </div>
           </div>
+        </div>
+      )}
+
+      {/* ================= ABA: MEU PERFIL & SEGURANÇA ================= */}
+      {activeTab === 'student-profile' && (
+        <div className="space-y-4 animate-in fade-in duration-200">
+          <Card className="border-border bg-surface/60 overflow-hidden">
+            <div className="h-20 bg-gradient-to-r from-primary/20 via-primary/5 to-transparent border-b border-border" />
+            <CardContent className="pt-0 relative px-5 pb-5">
+              <div className="flex items-end justify-between -mt-10 mb-4">
+                <img
+                  src={currentStudent?.avatarUrl || currentUser.avatarUrl || 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80'}
+                  alt={currentStudent?.fullName || currentUser.fullName}
+                  className="h-20 w-20 rounded-2xl object-cover ring-4 ring-card shadow-xl"
+                />
+                <Badge variant="primary" size="md" className="font-bold">
+                  Aluno(a) Ativo
+                </Badge>
+              </div>
+
+              <div className="space-y-1">
+                <h3 className="text-xl font-black text-foreground">
+                  {currentStudent?.fullName || currentUser.fullName}
+                </h3>
+                <p className="text-xs text-muted flex items-center gap-1.5">
+                  <Mail className="h-3.5 w-3.5 text-primary" />
+                  <span>{currentStudent?.email || currentUser.email}</span>
+                </p>
+                {currentStudent?.phone && (
+                  <p className="text-xs text-muted flex items-center gap-1.5">
+                    <Phone className="h-3.5 w-3.5 text-primary" />
+                    <span>{currentStudent.phone}</span>
+                  </p>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 mt-4 pt-4 border-t border-border">
+                <div className="p-3 rounded-xl bg-card border border-border/80">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider block">Objetivo</span>
+                  <span className="text-xs font-bold text-foreground line-clamp-1">{currentStudent?.goal || 'Hipertrofia'}</span>
+                </div>
+                <div className="p-3 rounded-xl bg-card border border-border/80">
+                  <span className="text-[10px] text-muted uppercase font-bold tracking-wider block">Treinador Responsável</span>
+                  <span className="text-xs font-bold text-foreground">Nilson Lopes (Omega)</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Dados Físicos Rápidos */}
+          <Card>
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-muted flex items-center gap-1.5">
+                <Scale className="h-3.5 w-3.5 text-primary" />
+                <span>Medidas & Metas Cadastradas</span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-3 gap-2 text-center">
+                <div className="p-3 rounded-xl bg-surface/50 border border-border">
+                  <span className="text-[10px] text-muted block mb-0.5">Peso Atual</span>
+                  <span className="text-sm font-black text-foreground">{currentStudent?.currentWeightKg || 70} kg</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface/50 border border-border">
+                  <span className="text-[10px] text-muted block mb-0.5">Meta de Peso</span>
+                  <span className="text-sm font-black text-primary">{currentStudent?.targetWeightKg || 68} kg</span>
+                </div>
+                <div className="p-3 rounded-xl bg-surface/50 border border-border">
+                  <span className="text-[10px] text-muted block mb-0.5">Adesão Geral</span>
+                  <span className="text-sm font-black text-emerald-400">{currentStudent?.adherenceRate || 95}%</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Card de Deslogar / Sair da Conta com Alta Visibilidade */}
+          <Card className="border-rose-500/30 bg-rose-500/5">
+            <CardContent className="p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <div className="h-10 w-10 rounded-xl bg-rose-500/15 border border-rose-500/30 text-rose-400 flex items-center justify-center shrink-0">
+                  <LogOut className="h-5 w-5" />
+                </div>
+                <div className="space-y-1">
+                  <h4 className="text-sm font-bold text-foreground">Encerrar Sessão do Aluno</h4>
+                  <p className="text-xs text-muted leading-relaxed">
+                    Ao deslogar, sua conta será desconectada e você retornará à tela de login do Omega Training. Nenhuma tela de treino permanecerá aberta.
+                  </p>
+                </div>
+              </div>
+
+              <Button
+                type="button"
+                variant="danger"
+                onClick={logoutUser}
+                className="w-full flex items-center justify-center gap-2 font-bold py-2.5 text-xs shadow-md shadow-rose-950/20"
+                id="student-profile-logout-btn"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Deslogar e Sair do Aplicativo</span>
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       )}
 

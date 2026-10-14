@@ -764,6 +764,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const matchingTrainer = trainers.find(t => t.email.toLowerCase() === cleanEmail) ||
       INITIAL_USERS.find(u => u.role === 'pro' && u.email.toLowerCase() === cleanEmail);
     if (matchingTrainer) {
+      const trainerRecord = trainers.find(t => t.id === matchingTrainer.id || t.email.toLowerCase() === cleanEmail);
+      if (trainerRecord && (trainerRecord.accessBlocked || trainerRecord.status === 'blocked')) {
+        return {
+          success: false,
+          error: `Acesso profissional suspenso. Motivo: ${trainerRecord.blockedReason || 'Consulte a administração.'}`
+        };
+      }
+
+      const validPasswords = [
+        (trainerRecord as any)?.temporaryPassword,
+        'Omega@2026',
+        'treinador123',
+        'Omega@Coach2026',
+        '123456'
+      ].filter(Boolean);
+      if (passwordInput && !validPasswords.includes(passwordInput.trim())) {
+        return { success: false, error: 'Senha incorreta para este treinador. Tente "treinador123" ou sua senha temporária.' };
+      }
+
       const userObj: UserProfile = {
         id: matchingTrainer.id,
         email: matchingTrainer.email,
@@ -775,7 +794,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setCurrentUser(userObj);
       setIsUserLoggedIn(true);
-      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      try {
+        localStorage.setItem('omega_user_logged_in', 'true');
+        sessionStorage.setItem('omega_auth_user_id', matchingTrainer.id);
+        sessionStorage.setItem('omega_auth_role', 'pro');
+      } catch {}
       return { success: true };
     }
 
@@ -783,6 +806,25 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     const matchingStudent = students.find(s => s.email.toLowerCase() === cleanEmail) ||
       INITIAL_USERS.find(u => u.role === 'student' && u.email.toLowerCase() === cleanEmail);
     if (matchingStudent) {
+      const studentRecord = students.find(s => s.id === matchingStudent.id || s.email.toLowerCase() === cleanEmail);
+      if (studentRecord && (studentRecord.accessBlocked || studentRecord.status === 'blocked')) {
+        return {
+          success: false,
+          error: `Acesso do aluno suspenso ou bloqueado. Motivo: ${studentRecord.blockedReason || 'Consulte seu treinador.'}`
+        };
+      }
+
+      const validPasswords = [
+        (studentRecord as any)?.temporaryPassword,
+        'Omega@2026',
+        'aluno123',
+        'Fit@1234',
+        '123456'
+      ].filter(Boolean);
+      if (passwordInput && !validPasswords.includes(passwordInput.trim())) {
+        return { success: false, error: 'Senha incorreta para este aluno. Tente "aluno123" ou sua senha temporária.' };
+      }
+
       const userObj: UserProfile = {
         id: matchingStudent.id,
         email: matchingStudent.email,
@@ -794,7 +836,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setCurrentUser(userObj);
       setIsUserLoggedIn(true);
-      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      try {
+        localStorage.setItem('omega_user_logged_in', 'true');
+        sessionStorage.setItem('omega_auth_user_id', matchingStudent.id);
+        sessionStorage.setItem('omega_auth_role', 'student');
+      } catch {}
       return { success: true };
     }
 
@@ -814,7 +860,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       };
       setCurrentUser(userObj);
       setIsUserLoggedIn(true);
-      try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+      try {
+        localStorage.setItem('omega_user_logged_in', 'true');
+        sessionStorage.setItem('omega_auth_user_id', userObj.id);
+        sessionStorage.setItem('omega_auth_role', role);
+      } catch {}
       return { success: true };
     }
 
@@ -840,7 +890,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
     setCurrentUser(newUser);
     setIsUserLoggedIn(true);
-    try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
+    try {
+      localStorage.setItem('omega_user_logged_in', 'true');
+      sessionStorage.setItem('omega_auth_user_id', newUser.id);
+      sessionStorage.setItem('omega_auth_role', userData.role);
+    } catch {}
 
     if (userData.role === 'student') {
       setStudents(prev => [
@@ -873,7 +927,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const logoutUser = () => {
     setIsUserLoggedIn(false);
     try {
-      localStorage.removeItem('omega_user_logged_in');
+      localStorage.setItem('omega_user_logged_in', 'false');
       sessionStorage.removeItem('omega_auth_user_id');
       sessionStorage.removeItem('omega_auth_role');
       if (typeof window !== 'undefined' && window.history?.replaceState) {

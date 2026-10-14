@@ -21,6 +21,7 @@ import { Lock, AlertTriangle, ShieldCheck, Phone, Mail, Key } from 'lucide-react
 import { Button } from './components/ui/Button';
 import { AdminLoginModal } from './components/auth/AdminLoginModal';
 import { InviteLoginGate } from './components/auth/InviteLoginGate';
+import { UserAuthScreen } from './components/auth/UserAuthScreen';
 
 export function App() {
   const {
@@ -31,11 +32,18 @@ export function App() {
     theme,
     isAdminAuthenticated,
     pendingInviteAuth,
+    isUserLoggedIn,
   } = useApp();
 
   // If user arrived via an invite link and needs to validate credentials
   if (pendingInviteAuth) {
     return <InviteLoginGate />;
+  }
+
+  // If user is logged out or unauthenticated, show dedicated full-screen login
+  // No student dashboard or private background content is rendered
+  if (!isUserLoggedIn) {
+    return <UserAuthScreen />;
   }
 
   // Check if current coach/trainer is blocked

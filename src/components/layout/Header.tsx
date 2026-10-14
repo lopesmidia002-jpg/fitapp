@@ -1,11 +1,9 @@
 import { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import { Button } from '../ui/Button';
-import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock, LogIn, LogOut } from 'lucide-react';
+import { Bell, ShieldCheck, Dumbbell, UserCheck, Menu, X, Lock, LogOut } from 'lucide-react';
 import { UserRole } from '../../types';
 import { AdminLoginModal } from '../auth/AdminLoginModal';
-import { UserAuthModal } from '../auth/UserAuthModal';
-
 
 export interface HeaderProps {
   onToggleMobileMenu?: () => void;
@@ -26,7 +24,6 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
   } = useApp();
   const [showNotifications, setShowNotifications] = useState(false);
   const [isAdminLoginModalOpen, setIsAdminLoginModalOpen] = useState(false);
-  const [isUserAuthModalOpen, setIsUserAuthModalOpen] = useState(false);
 
   const unreadCount = notifications.filter(n => !n.isRead).length;
 
@@ -243,12 +240,13 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
           )}
         </div>
 
-        {/* Current User Pill & Auth Launcher */}
+        {/* Current User Pill & Quick Logout */}
         <button
           type="button"
-          onClick={() => setIsUserAuthModalOpen(true)}
+          onClick={logoutUser}
           className="flex items-center gap-2 pl-2 pr-2.5 py-1 rounded-xl border-l border-border hover:bg-card/80 transition-all text-left group"
-          title="Clique para entrar, criar conta ou trocar de usuário"
+          title="Clique para encerrar a sessão (Sair)"
+          id="header-user-logout-pill"
         >
           <img
             src={currentUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80'}
@@ -260,10 +258,10 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
               <p className="text-xs font-bold text-foreground leading-tight group-hover:text-primary transition-colors">
                 {currentUser.fullName}
               </p>
-              <LogIn className="h-3 w-3 text-muted group-hover:text-primary transition-colors" />
+              <LogOut className="h-3 w-3 text-muted group-hover:text-rose-400 transition-colors" />
             </div>
             <p className="text-[10px] text-muted capitalize">
-              {currentUser.role === 'pro' ? 'Personal Trainer' : currentUser.role}
+              {currentUser.role === 'pro' ? 'Personal Trainer' : currentUser.role} • <span className="text-rose-400 group-hover:underline">Sair</span>
             </p>
           </div>
         </button>
@@ -273,11 +271,6 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
         isOpen={isAdminLoginModalOpen}
         onClose={() => setIsAdminLoginModalOpen(false)}
         onSuccess={() => switchRole('superadmin')}
-      />
-
-      <UserAuthModal
-        isOpen={isUserAuthModalOpen}
-        onClose={() => setIsUserAuthModalOpen(false)}
       />
     </header>
   );
