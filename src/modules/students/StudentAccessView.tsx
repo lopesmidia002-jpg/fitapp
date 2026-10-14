@@ -111,7 +111,8 @@ export function StudentAccessView() {
   const getStudentAccessLink = (student: Student) => {
     const origin = typeof window !== 'undefined' ? window.location.origin : '';
     const pathname = typeof window !== 'undefined' ? window.location.pathname : '';
-    return `${origin}${pathname}?access=student&id=${student.id}&login=${encodeURIComponent(student.email)}`;
+    const pwd = student.temporaryPassword || 'Omega@2026';
+    return `${origin}${pathname}?access=student&id=${encodeURIComponent(student.id)}&login=${encodeURIComponent(student.email)}&name=${encodeURIComponent(student.fullName)}&pwd=${encodeURIComponent(pwd)}`;
   };
 
   const getStudentInviteMessage = (student: Student) => {
@@ -218,28 +219,7 @@ Bons treinos! 🔥`;
     if (!registerForm.fullName || !registerForm.email) return;
 
     const finalAvatar = registerForm.avatarUrl || `https://images.unsplash.com/photo-${1534528741775 + students.length}?auto=format&fit=crop&w=150&q=80`;
-    const generatedId = `stud-${Date.now()}`;
-    addStudent({
-      fullName: registerForm.fullName,
-      email: registerForm.email,
-      phone: registerForm.phone,
-      avatarUrl: registerForm.avatarUrl || undefined,
-      goal: registerForm.goal,
-      currentWeightKg: Number(registerForm.currentWeightKg),
-      targetWeightKg: Number(registerForm.targetWeightKg),
-      heightCm: Number(registerForm.heightCm),
-      status: 'active',
-      temporaryPassword: registerForm.temporaryPassword,
-      accessBlocked: false,
-    });
-
-    setIsRegisterModalOpen(false);
-
-    // Prompt immediate sharing modal
-    const createdStudent: Student = {
-      id: generatedId,
-      organizationId: organization.id,
-      proId: 'user-pro-1',
+    const createdStudent = addStudent({
       fullName: registerForm.fullName,
       email: registerForm.email,
       phone: registerForm.phone,
@@ -251,12 +231,9 @@ Bons treinos! 🔥`;
       status: 'active',
       temporaryPassword: registerForm.temporaryPassword,
       accessBlocked: false,
-      joinDate: new Date().toISOString().split('T')[0],
-      adherenceRate: 100,
-      completedWorkouts: 0,
-      lastActive: new Date().toISOString(),
-    };
+    });
 
+    setIsRegisterModalOpen(false);
     setTargetStudentForShare(createdStudent);
     setIsShareModalOpen(true);
     setShareToast('Aluno cadastrado com sucesso! Envie o link de acesso abaixo.');

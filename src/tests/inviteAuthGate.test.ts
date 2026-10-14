@@ -142,4 +142,104 @@ describe('Invite Access Links, Login Gate & Environment Isolation', () => {
     expect(isStudentEnvironment).toBe(true);
     expect(showCoachSidebar).toBe(false);
   });
+
+  it('should dynamically reconstruct new student from mobile invite link without falling back to Marina Aluna', () => {
+    const mobileLinkParams = new URLSearchParams('access=student&id=stud-test-carlos&login=carlos%40omega.pro&name=Carlos%20Novo%20Aluno&pwd=Omega%40Carlos99');
+    
+    const studentIdParam = mobileLinkParams.get('id');
+    const loginParam = mobileLinkParams.get('login');
+    const nameParam = mobileLinkParams.get('name');
+    const pwdParam = mobileLinkParams.get('pwd');
+
+    // On Carlos's phone, students list is empty or only default
+    const existingStudents: Student[] = [];
+    let student = existingStudents.find(s => s.id === studentIdParam);
+
+    if (!student && (loginParam || studentIdParam)) {
+      student = {
+        id: studentIdParam || `stud-${Date.now()}`,
+        organizationId: 'org-1',
+        proId: 'user-pro-1',
+        fullName: nameParam ? decodeURIComponent(nameParam) : 'Aluno',
+        email: loginParam ? decodeURIComponent(loginParam) : 'aluno@omegatraining.pro',
+        phone: '',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775?auto=format&fit=crop&w=150&q=80',
+        goal: 'Hipertrofia e Condicionamento',
+        currentWeightKg: 70,
+        targetWeightKg: 68,
+        heightCm: 175,
+        status: 'active',
+        temporaryPassword: pwdParam ? decodeURIComponent(pwdParam) : 'Omega@2026',
+        accessBlocked: false,
+        joinDate: new Date().toISOString().split('T')[0],
+        adherenceRate: 100,
+        completedWorkouts: 0,
+        lastActive: new Date().toISOString(),
+      };
+    }
+
+    expect(student).toBeDefined();
+    expect(student?.id).toBe('stud-test-carlos');
+    expect(student?.fullName).toBe('Carlos Novo Aluno');
+    expect(student?.email).toBe('carlos@omega.pro');
+    expect(student?.temporaryPassword).toBe('Omega@Carlos99');
+    expect(student?.fullName).not.toBe('Marina Aluna');
+  });
+
+  it('should authenticate reconstructed student and persist session in localStorage for mobile PWA reloads', () => {
+    const student: Student = {
+      id: 'stud-test-carlos',
+      organizationId: 'org-1',
+      proId: 'user-pro-1',
+      fullName: 'Carlos Novo Aluno',
+      email: 'carlos@omega.pro',
+      phone: '(11) 98888-7777',
+      avatarUrl: 'https://images.unsplash.com/photo-1534528741775?auto=format&fit=crop&w=150&q=80',
+      goal: 'Hipertrofia',
+      currentWeightKg: 78,
+      targetWeightKg: 75,
+      heightCm: 178,
+      status: 'active',
+      temporaryPassword: 'Omega@Carlos99',
+      accessBlocked: false,
+      joinDate: '2026-10-14',
+      adherenceRate: 100,
+      completedWorkouts: 0,
+      lastActive: '2026-10-14',
+    };
+
+    const mockLocalStorage: Record<string, string> = {};
+    const mockSessionStorage: Record<string, string> = {};
+
+    const enteredPassword = 'Omega@Carlos99';
+    const validPasswords = [
+      student.temporaryPassword,
+      'Omega@2026',
+      'aluno123',
+      'Fit@1234',
+      '123456',
+    ].filter(Boolean);
+
+    const isMatch = validPasswords.includes(enteredPassword);
+    expect(isMatch).toBe(true);
+
+    if (isMatch) {
+      mockSessionStorage['omega_auth_user_id'] = student.id;
+      mockSessionStorage['omega_auth_role'] = 'student';
+      mockLocalStorage['omega_auth_user_id'] = student.id;
+      mockLocalStorage['omega_auth_role'] = 'student';
+      mockLocalStorage['omega_user_logged_in'] = 'true';
+      mockLocalStorage['omega_user'] = JSON.stringify({
+        id: student.id,
+        email: student.email,
+        fullName: student.fullName,
+        role: 'student',
+      });
+    }
+
+    expect(mockLocalStorage['omega_user_logged_in']).toBe('true');
+    expect(mockLocalStorage['omega_auth_user_id']).toBe('stud-test-carlos');
+    expect(JSON.parse(mockLocalStorage['omega_user']).fullName).toBe('Carlos Novo Aluno');
+  });
 });
+

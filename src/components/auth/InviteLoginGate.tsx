@@ -63,12 +63,12 @@ export function InviteLoginGate() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0B0D10] text-[#F5F7FA] flex flex-col justify-center items-center p-4 sm:p-6 relative overflow-hidden selection:bg-primary selection:text-background">
+    <div className="min-h-screen bg-[#0B0D10] text-[#F5F7FA] flex flex-col items-center justify-start sm:justify-center p-4 sm:p-6 relative overflow-y-auto selection:bg-primary selection:text-background py-8 sm:py-12">
       {/* Background glow effects */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-primary/10 rounded-full blur-3xl pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-72 h-72 bg-blue-500/5 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="max-w-md w-full bg-card border border-border shadow-2xl rounded-3xl p-6 sm:p-8 relative z-10 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
+      <div className="my-auto max-w-md w-full bg-card border border-border shadow-2xl rounded-3xl p-6 sm:p-8 relative z-10 backdrop-blur-xl animate-in fade-in zoom-in-95 duration-200">
         {/* Brand Header */}
         <div className="flex flex-col items-center text-center space-y-2 mb-6">
           <div className="flex items-center gap-2.5">
@@ -145,7 +145,7 @@ export function InviteLoginGate() {
                 title="Preencher com a senha configurada no convite"
               >
                 <Sparkles className="h-3 w-3" />
-                <span>Preencher Senha Demo</span>
+                <span>Preencher Senha Inicial</span>
               </button>
             </div>
 
@@ -156,7 +156,6 @@ export function InviteLoginGate() {
                 value={password}
                 onChange={e => setPassword(e.target.value)}
                 required
-                autoFocus
                 className="pr-10"
               />
               <button
@@ -168,6 +167,9 @@ export function InviteLoginGate() {
                 {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
               </button>
             </div>
+            <p className="text-[11px] text-muted">
+              Sua senha inicial foi definida pelo treinador e enviada no convite.
+            </p>
           </div>
 
           <Button

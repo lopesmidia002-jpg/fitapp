@@ -36,7 +36,7 @@ interface AppContextType {
   organization: Organization;
   updateOrganization: (updates: Partial<Organization>) => void;
   students: Student[];
-  addStudent: (studentData: Omit<Student, 'id' | 'organizationId' | 'proId' | 'joinDate' | 'adherenceRate' | 'completedWorkouts' | 'lastActive'>) => void;
+  addStudent: (studentData: Omit<Student, 'id' | 'organizationId' | 'proId' | 'joinDate' | 'adherenceRate' | 'completedWorkouts' | 'lastActive'> & { id?: string }) => Student;
   updateStudent: (id: string, updates: Partial<Student>) => void;
   archiveStudent: (id: string) => void;
   blockStudent: (id: string, reason?: string) => void;
@@ -44,7 +44,7 @@ interface AppContextType {
   deleteStudent: (id: string) => void;
   resetStudentPassword: (id: string, newPassword: string) => void;
   trainers: Trainer[];
-  addTrainer: (trainerData: Omit<Trainer, 'id' | 'createdAt'>) => void;
+  addTrainer: (trainerData: Omit<Trainer, 'id' | 'createdAt'> & { id?: string }) => Trainer;
   updateTrainer: (id: string, updates: Partial<Trainer>) => void;
   blockTrainer: (id: string, reason?: string) => void;
   unblockTrainer: (id: string) => void;
@@ -111,6 +111,152 @@ const sanitizeEmail = (email: string | undefined): string => {
     .replace(/fitcore/gi, 'omegatraining');
 };
 
+function parseInviteFromUrl(): PendingInviteAuth | null {
+  if (typeof window === 'undefined') return null;
+  try {
+    let search = window.location.search;
+    if (!search && window.location.hash.includes('?')) {
+      search = window.location.hash.substring(window.location.hash.indexOf('?'));
+    }
+    if (!search) return null;
+    const urlParams = new URLSearchParams(search);
+    const accessParam = urlParams.get('access') || urlParams.get('role');
+
+    if (accessParam === 'student') {
+      const studentIdParam = urlParams.get('studentId') || urlParams.get('id');
+      const loginParam = urlParams.get('login');
+      const nameParam = urlParams.get('name');
+      const pwdParam = urlParams.get('pwd') || urlParams.get('pass');
+      const phoneParam = urlParams.get('phone');
+
+      const cleanLogin = loginParam ? sanitizeEmail(decodeURIComponent(loginParam).trim()) : null;
+      const decodedName = nameParam ? decodeURIComponent(nameParam).trim() : null;
+      const decodedPwd = pwdParam ? decodeURIComponent(pwdParam).trim() : null;
+
+      const authUserId = sessionStorage.getItem('omega_auth_user_id') || localStorage.getItem('omega_auth_user_id');
+      const authRole = sessionStorage.getItem('omega_auth_role') || localStorage.getItem('omega_auth_role');
+      if (studentIdParam && authUserId === studentIdParam && authRole === 'student') {
+        return null;
+      }
+
+      let existingStudents: Student[] = [];
+      try {
+        const saved = localStorage.getItem('omega_students') || localStorage.getItem('fitcore_students');
+        if (saved) existingStudents = JSON.parse(saved);
+      } catch {}
+      if (!existingStudents.length) existingStudents = INITIAL_STUDENTS;
+
+      let student = (studentIdParam ? existingStudents.find(s => s.id === studentIdParam) : null)
+        || (cleanLogin ? existingStudents.find(s => s.email.toLowerCase() === cleanLogin.toLowerCase()) : null);
+
+      if (!student && (cleanLogin || studentIdParam)) {
+        student = {
+          id: studentIdParam || `stud-${Date.now()}`,
+          organizationId: 'org-1',
+          proId: 'user-pro-1',
+          fullName: decodedName || (cleanLogin ? cleanLogin.split('@')[0] : 'Aluno'),
+          email: cleanLogin || 'aluno@omegatraining.pro',
+          phone: phoneParam ? decodeURIComponent(phoneParam).trim() : '',
+          avatarUrl: `https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80`,
+          goal: 'Hipertrofia e Condicionamento',
+          currentWeightKg: 70,
+          targetWeightKg: 68,
+          heightCm: 175,
+          status: 'active',
+          temporaryPassword: decodedPwd || 'Omega@2026',
+          accessBlocked: false,
+          joinDate: new Date().toISOString().split('T')[0],
+          adherenceRate: 100,
+          completedWorkouts: 0,
+          lastActive: new Date().toISOString(),
+        };
+
+        try {
+          const updated = [student, ...existingStudents.filter(s => s.id !== student!.id && s.email.toLowerCase() !== student!.email.toLowerCase())];
+          localStorage.setItem('omega_students', JSON.stringify(updated));
+        } catch {}
+      }
+
+      if (!student && !studentIdParam && !cleanLogin) {
+        student = existingStudents[0] || INITIAL_STUDENTS[0];
+      }
+
+      if (student) {
+        return {
+          role: 'student',
+          targetId: student.id,
+          loginEmail: student.email,
+          student,
+        };
+      }
+    } else if (accessParam === 'pro') {
+      const trainerIdParam = urlParams.get('trainerId') || urlParams.get('id');
+      const loginParam = urlParams.get('login');
+      const nameParam = urlParams.get('name');
+      const pwdParam = urlParams.get('pwd') || urlParams.get('pass');
+      const phoneParam = urlParams.get('phone');
+
+      const cleanLogin = loginParam ? sanitizeEmail(decodeURIComponent(loginParam).trim()) : null;
+      const decodedName = nameParam ? decodeURIComponent(nameParam).trim() : null;
+      const decodedPwd = pwdParam ? decodeURIComponent(pwdParam).trim() : null;
+
+      const authUserId = sessionStorage.getItem('omega_auth_user_id') || localStorage.getItem('omega_auth_user_id');
+      const authRole = sessionStorage.getItem('omega_auth_role') || localStorage.getItem('omega_auth_role');
+      if (trainerIdParam && authUserId === trainerIdParam && authRole === 'pro') {
+        return null;
+      }
+
+      let existingTrainers: Trainer[] = [];
+      try {
+        const saved = localStorage.getItem('omega_trainers') || localStorage.getItem('fitcore_trainers');
+        if (saved) existingTrainers = JSON.parse(saved);
+      } catch {}
+      if (!existingTrainers.length) existingTrainers = INITIAL_TRAINERS;
+
+      let trainer = (trainerIdParam ? existingTrainers.find(t => t.id === trainerIdParam) : null)
+        || (cleanLogin ? existingTrainers.find(t => t.email.toLowerCase() === cleanLogin.toLowerCase()) : null);
+
+      if (!trainer && (cleanLogin || trainerIdParam)) {
+        trainer = {
+          id: trainerIdParam || `coach-${Date.now()}`,
+          organizationId: 'org-1',
+          fullName: decodedName || 'Professor(a)',
+          email: cleanLogin || 'treinador@omegatraining.pro',
+          phone: phoneParam ? decodeURIComponent(phoneParam).trim() : '',
+          avatarUrl: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80`,
+          specialty: 'Treinamento & Musculação',
+          cref: 'Confirmado',
+          role: 'pro',
+          assignedStudentsCount: 0,
+          status: 'active',
+          accessBlocked: false,
+          temporaryPassword: decodedPwd || 'Omega@Coach2026',
+          createdAt: new Date().toISOString().split('T')[0],
+        };
+
+        try {
+          const updated = [trainer, ...existingTrainers.filter(t => t.id !== trainer!.id && t.email.toLowerCase() !== trainer!.email.toLowerCase())];
+          localStorage.setItem('omega_trainers', JSON.stringify(updated));
+        } catch {}
+      }
+
+      if (!trainer && !trainerIdParam && !cleanLogin) {
+        trainer = existingTrainers[0] || INITIAL_TRAINERS[0];
+      }
+
+      if (trainer) {
+        return {
+          role: 'pro',
+          targetId: trainer.id,
+          loginEmail: trainer.email,
+          trainer,
+        };
+      }
+    }
+  } catch {}
+  return null;
+}
+
 const AppContext = createContext<AppContextType | undefined>(undefined);
 
 export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -133,7 +279,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     };
   });
 
-  const [pendingInviteAuth, setPendingInviteAuth] = useState<PendingInviteAuth | null>(null);
+  const [pendingInviteAuth, setPendingInviteAuth] = useState<PendingInviteAuth | null>(() => parseInviteFromUrl());
 
   const [currentUser, setCurrentUser] = useState<UserProfile>(() => {
     const saved = localStorage.getItem('omega_user') || localStorage.getItem('fitcore_user');
@@ -495,12 +641,57 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       const studentIdParam = urlParams.get('studentId') || (accessParam === 'student' ? urlParams.get('id') : null);
       const trainerIdParam = urlParams.get('trainerId') || (accessParam === 'pro' ? urlParams.get('id') : null);
       const loginParam = urlParams.get('login');
+      const nameParam = urlParams.get('name');
+      const pwdParam = urlParams.get('pwd') || urlParams.get('pass');
+      const phoneParam = urlParams.get('phone');
 
       if (accessParam === 'student') {
-        const student = (studentIdParam ? students.find(s => s.id === studentIdParam) : null)
-          || (loginParam ? students.find(s => s.email.toLowerCase() === loginParam.toLowerCase()) : null)
-          || students[0]
-          || INITIAL_STUDENTS[0];
+        const cleanLogin = loginParam ? sanitizeEmail(decodeURIComponent(loginParam).trim()) : null;
+        const decodedName = nameParam ? decodeURIComponent(nameParam).trim() : null;
+        const decodedPwd = pwdParam ? decodeURIComponent(pwdParam).trim() : null;
+
+        // 1. Look up student in existing state by ID or Email
+        let student = (studentIdParam ? students.find(s => s.id === studentIdParam) : null)
+          || (cleanLogin ? students.find(s => s.email.toLowerCase() === cleanLogin.toLowerCase()) : null);
+
+        // 2. If student is not found (e.g. brand-new student opening mobile link on their phone for the first time):
+        // Automatically instantiate and register the student from URL invite payload!
+        if (!student && (cleanLogin || studentIdParam)) {
+          const freshStudent: Student = {
+            id: studentIdParam || `stud-${Date.now()}`,
+            organizationId: organization?.id || 'org-1',
+            proId: 'user-pro-1',
+            fullName: decodedName || (cleanLogin ? cleanLogin.split('@')[0] : 'Aluno'),
+            email: cleanLogin || 'aluno@omegatraining.pro',
+            phone: phoneParam ? decodeURIComponent(phoneParam).trim() : '',
+            avatarUrl: `https://images.unsplash.com/photo-1534528741775?auto=format&fit=crop&w=150&q=80`,
+            goal: 'Hipertrofia e Condicionamento',
+            currentWeightKg: 70,
+            targetWeightKg: 68,
+            heightCm: 175,
+            status: 'active',
+            temporaryPassword: decodedPwd || 'Omega@2026',
+            accessBlocked: false,
+            joinDate: new Date().toISOString().split('T')[0],
+            adherenceRate: 100,
+            completedWorkouts: 0,
+            lastActive: new Date().toISOString(),
+          };
+
+          student = freshStudent;
+          setStudents(prev => {
+            const exists = prev.some(s => s.id === freshStudent.id || s.email.toLowerCase() === freshStudent.email.toLowerCase());
+            if (exists) return prev;
+            const updated = [freshStudent, ...prev];
+            try { localStorage.setItem('omega_students', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        }
+
+        // 3. Fallback only if no student param was provided at all
+        if (!student && !studentIdParam && !cleanLogin) {
+          student = students[0] || INITIAL_STUDENTS[0];
+        }
 
         if (student) {
           const authUserId = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_user_id') : null;
@@ -517,6 +708,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               phone: student.phone,
             });
             setIsUserLoggedIn(true);
+            try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
           } else {
             // Intercept and prompt the Access Login & Password Gate
             setPendingInviteAuth({
@@ -528,10 +720,43 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           }
         }
       } else if (accessParam === 'pro') {
-        const trainer = (trainerIdParam ? trainers.find(t => t.id === trainerIdParam) : null)
-          || (loginParam ? trainers.find(t => t.email.toLowerCase() === loginParam.toLowerCase()) : null)
-          || trainers[0]
-          || INITIAL_TRAINERS[0];
+        const cleanLogin = loginParam ? sanitizeEmail(decodeURIComponent(loginParam).trim()) : null;
+        const decodedName = nameParam ? decodeURIComponent(nameParam).trim() : null;
+        const decodedPwd = pwdParam ? decodeURIComponent(pwdParam).trim() : null;
+
+        let trainer = (trainerIdParam ? trainers.find(t => t.id === trainerIdParam) : null)
+          || (cleanLogin ? trainers.find(t => t.email.toLowerCase() === cleanLogin.toLowerCase()) : null);
+
+        if (!trainer && (cleanLogin || trainerIdParam)) {
+          const freshTrainer: Trainer = {
+            id: trainerIdParam || `coach-${Date.now()}`,
+            organizationId: organization?.id || 'org-1',
+            fullName: decodedName || 'Professor(a)',
+            email: cleanLogin || 'treinador@omegatraining.pro',
+            phone: phoneParam ? decodeURIComponent(phoneParam).trim() : '',
+            avatarUrl: `https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80`,
+            specialty: 'Treinamento & Musculação',
+            cref: 'Confirmado',
+            role: 'pro',
+            assignedStudentsCount: 0,
+            status: 'active',
+            accessBlocked: false,
+            temporaryPassword: decodedPwd || 'Omega@Coach2026',
+            createdAt: new Date().toISOString().split('T')[0],
+          };
+          trainer = freshTrainer;
+          setTrainers(prev => {
+            const exists = prev.some(t => t.id === freshTrainer.id || t.email.toLowerCase() === freshTrainer.email.toLowerCase());
+            if (exists) return prev;
+            const updated = [freshTrainer, ...prev];
+            try { localStorage.setItem('omega_trainers', JSON.stringify(updated)); } catch {}
+            return updated;
+          });
+        }
+
+        if (!trainer && !trainerIdParam && !cleanLogin) {
+          trainer = trainers[0] || INITIAL_TRAINERS[0];
+        }
 
         if (trainer) {
           const authUserId = typeof window !== 'undefined' ? sessionStorage.getItem('omega_auth_user_id') : null;
@@ -548,6 +773,7 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
               phone: trainer.phone,
             });
             setIsUserLoggedIn(true);
+            try { localStorage.setItem('omega_user_logged_in', 'true'); } catch {}
           } else {
             // Intercept and prompt the Access Login & Password Gate
             setPendingInviteAuth({
@@ -598,18 +824,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'Omega@2026',
         'aluno123',
         'Fit@1234',
+        '123456',
       ].filter(Boolean);
 
       const isMatch = validPasswords.some(p => p === trimmedPassword);
       if (isMatch) {
-        try {
-          sessionStorage.setItem('omega_auth_user_id', student.id);
-          sessionStorage.setItem('omega_auth_role', 'student');
-          if (typeof window !== 'undefined' && window.history?.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } catch {}
-
         const userObj: UserProfile = {
           id: student.id,
           email: student.email,
@@ -620,12 +839,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           phone: student.phone,
         };
 
+        try {
+          sessionStorage.setItem('omega_auth_user_id', student.id);
+          sessionStorage.setItem('omega_auth_role', 'student');
+          localStorage.setItem('omega_auth_user_id', student.id);
+          localStorage.setItem('omega_auth_role', 'student');
+          localStorage.setItem('omega_user_logged_in', 'true');
+          localStorage.setItem('omega_user', JSON.stringify(userObj));
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch {}
+
         setCurrentUser(userObj);
         setIsUserLoggedIn(true);
         setPendingInviteAuth(null);
         return { success: true };
       } else {
-        return { success: false, error: 'Senha incorreta. Verifique a senha recebida ou use o botão de preenchimento Demo.' };
+        return { success: false, error: 'Senha incorreta. Verifique a senha recebida no WhatsApp ou use o botão Preencher Senha Inicial.' };
       }
     }
 
@@ -647,18 +878,11 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         'Omega@Coach2026',
         'treinador123',
         'Omega@2026',
+        '123456',
       ].filter(Boolean);
 
       const isMatch = validPasswords.some(p => p === trimmedPassword);
       if (isMatch) {
-        try {
-          sessionStorage.setItem('omega_auth_user_id', trainer.id);
-          sessionStorage.setItem('omega_auth_role', 'pro');
-          if (typeof window !== 'undefined' && window.history?.replaceState) {
-            window.history.replaceState({}, document.title, window.location.pathname);
-          }
-        } catch {}
-
         const userObj: UserProfile = {
           id: trainer.id,
           email: trainer.email,
@@ -669,12 +893,24 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
           phone: trainer.phone,
         };
 
+        try {
+          sessionStorage.setItem('omega_auth_user_id', trainer.id);
+          sessionStorage.setItem('omega_auth_role', 'pro');
+          localStorage.setItem('omega_auth_user_id', trainer.id);
+          localStorage.setItem('omega_auth_role', 'pro');
+          localStorage.setItem('omega_user_logged_in', 'true');
+          localStorage.setItem('omega_user', JSON.stringify(userObj));
+          if (typeof window !== 'undefined' && window.history?.replaceState) {
+            window.history.replaceState({}, document.title, window.location.pathname);
+          }
+        } catch {}
+
         setCurrentUser(userObj);
         setIsUserLoggedIn(true);
         setPendingInviteAuth(null);
         return { success: true };
       } else {
-        return { success: false, error: 'Senha incorreta. Verifique a senha recebida ou use o botão de preenchimento Demo.' };
+        return { success: false, error: 'Senha incorreta. Verifique a senha recebida ou use o botão Preencher Senha Inicial.' };
       }
     }
 
@@ -686,6 +922,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     try {
       sessionStorage.removeItem('omega_auth_user_id');
       sessionStorage.removeItem('omega_auth_role');
+      localStorage.removeItem('omega_auth_user_id');
+      localStorage.removeItem('omega_auth_role');
       if (typeof window !== 'undefined' && window.history?.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }
@@ -747,6 +985,16 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [isUserLoggedIn, setIsUserLoggedIn] = useState<boolean>(() => {
     try {
+      if (typeof window !== 'undefined') {
+        let search = window.location.search;
+        if (!search && window.location.hash.includes('?')) {
+          search = window.location.hash.substring(window.location.hash.indexOf('?'));
+        }
+        if (search.includes('access=') || search.includes('role=student') || search.includes('role=pro')) {
+          const authUserId = sessionStorage.getItem('omega_auth_user_id') || localStorage.getItem('omega_auth_user_id');
+          if (!authUserId) return false;
+        }
+      }
       return localStorage.getItem('omega_user_logged_in') === 'true';
     } catch {
       return true;
@@ -936,6 +1184,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsAdminAuthenticated(false);
     try {
       localStorage.setItem('omega_user_logged_in', 'false');
+      localStorage.removeItem('omega_auth_user_id');
+      localStorage.removeItem('omega_auth_role');
       sessionStorage.removeItem('omega_auth_user_id');
       sessionStorage.removeItem('omega_auth_role');
       sessionStorage.removeItem('omega_admin_auth');
@@ -971,13 +1221,14 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setOrganization(prev => ({ ...prev, ...updates }));
   };
 
-  const addStudent = (studentData: Omit<Student, 'id' | 'organizationId' | 'proId' | 'joinDate' | 'adherenceRate' | 'completedWorkouts' | 'lastActive'>) => {
+  const addStudent = (studentData: Omit<Student, 'id' | 'organizationId' | 'proId' | 'joinDate' | 'adherenceRate' | 'completedWorkouts' | 'lastActive'> & { id?: string }): Student => {
+    const newStudentId = studentData.id || `stud-${Date.now()}`;
     const newStudent: Student = {
       ...studentData,
       email: sanitizeEmail(studentData.email),
-      id: `stud-${Date.now()}`,
+      id: newStudentId,
       organizationId: organization.id,
-      proId: currentUser.id,
+      proId: currentUser.id || 'user-pro-1',
       joinDate: new Date().toISOString().split('T')[0],
       lastActive: new Date().toISOString(),
       adherenceRate: 100,
@@ -986,8 +1237,13 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       temporaryPassword: studentData.temporaryPassword || `Fit@${Math.floor(1000 + Math.random() * 9000)}`,
       accessBlocked: false,
     };
-    setStudents(prev => [newStudent, ...prev]);
+    setStudents(prev => {
+      const updated = [newStudent, ...prev.filter(s => s.id !== newStudent.id)];
+      try { localStorage.setItem('omega_students', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
     setOrganization(prev => ({ ...prev, studentCount: prev.studentCount + 1 }));
+    return newStudent;
   };
 
   const updateStudent = (id: string, updates: Partial<Student>) => {
@@ -1047,11 +1303,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } : s));
   };
 
-  const addTrainer = (trainerData: Omit<Trainer, 'id' | 'createdAt'>) => {
+  const addTrainer = (trainerData: Omit<Trainer, 'id' | 'createdAt'> & { id?: string }): Trainer => {
+    const newTrainerId = trainerData.id || `trainer-${Date.now()}`;
     const newTrainer: Trainer = {
       ...trainerData,
       email: sanitizeEmail(trainerData.email),
-      id: `trainer-${Date.now()}`,
+      id: newTrainerId,
       organizationId: organization.id,
       role: 'pro',
       status: trainerData.status || 'active',
@@ -1061,7 +1318,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       temporaryPassword: trainerData.temporaryPassword || `Omega@${Math.floor(1000 + Math.random() * 9000)}`,
       avatarUrl: trainerData.avatarUrl || `https://images.unsplash.com/photo-1534528741775?auto=format&fit=crop&w=200&q=80`,
     };
-    setTrainers(prev => [newTrainer, ...prev]);
+    setTrainers(prev => {
+      const updated = [newTrainer, ...prev.filter(t => t.id !== newTrainer.id)];
+      try { localStorage.setItem('omega_trainers', JSON.stringify(updated)); } catch {}
+      return updated;
+    });
+    return newTrainer;
   };
 
   const updateTrainer = (id: string, updates: Partial<Trainer>) => {
