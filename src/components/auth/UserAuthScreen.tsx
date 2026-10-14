@@ -96,12 +96,24 @@ export function UserAuthScreen() {
     setSuccessMessage(`Instruções de redefinição de senha enviadas para ${forgotEmail}.`);
   };
 
-  const handleQuickLogin = (role: 'pro' | 'student') => {
+  const handleQuickLogin = (role: 'pro' | 'student' | 'admin') => {
     setErrorMessage('');
     setSuccessMessage('');
     setIsLoading(true);
 
-    if (role === 'pro') {
+    if (role === 'admin') {
+      setLoginEmail('admin@omegatraining.pro');
+      setLoginPassword('Omega@Admin2026');
+      setTimeout(() => {
+        const res = loginUser('admin@omegatraining.pro', 'Omega@Admin2026');
+        if (res.success) {
+          setSuccessMessage('Entrando como Superadministrador Demo...');
+        } else {
+          setErrorMessage(res.error || 'Erro no login demo');
+          setIsLoading(false);
+        }
+      }, 300);
+    } else if (role === 'pro') {
       setLoginEmail('nilson.coach@omegatraining.pro');
       setLoginPassword('treinador123');
       setTimeout(() => {
@@ -129,7 +141,7 @@ export function UserAuthScreen() {
   };
 
   return (
-    <div className="min-h-screen w-full bg-[#0B0D10] text-[#F5F7FA] flex items-center justify-center p-3 sm:p-6 md:p-8 relative overflow-y-auto selection:bg-primary selection:text-background py-6 sm:py-10">
+    <div className="min-h-screen w-full bg-[#0B0D10] text-[#F5F7FA] flex flex-col items-center justify-start sm:justify-center p-3 sm:p-6 md:p-8 relative overflow-y-auto selection:bg-primary selection:text-background py-6 sm:py-10">
       {/* Background ambient lighting */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
       <div className="absolute bottom-10 right-10 w-80 h-80 bg-emerald-500/5 rounded-full blur-[100px] pointer-events-none" />
@@ -288,17 +300,17 @@ export function UserAuthScreen() {
               <span className="text-[10px] font-bold text-muted uppercase tracking-wider block text-center">
                 Acesso Rápido para Demonstração (1 Clique):
               </span>
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuickLogin('student')}
                   disabled={isLoading}
-                  className="text-xs flex items-center gap-1.5 justify-center py-2.5 border-primary/30 hover:bg-primary/10"
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-primary/30 hover:bg-primary/10"
                 >
-                  <UserCheck className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-bold">Aluno Demo</span>
+                  <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="font-bold truncate">Aluno Demo</span>
                 </Button>
                 <Button
                   type="button"
@@ -306,10 +318,21 @@ export function UserAuthScreen() {
                   size="sm"
                   onClick={() => handleQuickLogin('pro')}
                   disabled={isLoading}
-                  className="text-xs flex items-center gap-1.5 justify-center py-2.5 border-border hover:bg-card"
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-border hover:bg-card"
                 >
-                  <Dumbbell className="h-3.5 w-3.5 text-primary" />
-                  <span className="font-bold">Treinador Demo</span>
+                  <Dumbbell className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="font-bold truncate">Treinador Demo</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickLogin('admin')}
+                  disabled={isLoading}
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                  <span className="font-bold truncate">Admin Demo</span>
                 </Button>
               </div>
             </div>

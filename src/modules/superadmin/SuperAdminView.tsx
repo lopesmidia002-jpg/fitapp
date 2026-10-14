@@ -41,7 +41,8 @@ import {
   Dumbbell,
   GraduationCap,
   Settings,
-  Menu
+  Menu,
+  LogOut
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 import { Student, Trainer } from '../../types';
@@ -74,6 +75,7 @@ export function SuperAdminView() {
     updateOrganization,
     adminCredentials,
     updateAdminPassword,
+    logoutAdmin,
   } = useApp();
 
   const [activeTab, setActiveTab] = useState<'trainers' | 'students' | 'tenants' | 'audit' | 'settings'>('trainers');
@@ -704,9 +706,23 @@ Bons atendimentos e sucesso! 🚀`;
           </p>
         </div>
 
-        <Badge variant="danger" size="md">
-          Acesso Restrito Superadmin
-        </Badge>
+        <div className="flex items-center gap-2">
+          <Badge variant="danger" size="md">
+            Acesso Restrito Superadmin
+          </Badge>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={logoutAdmin}
+            className="border-rose-500/40 text-rose-400 hover:text-rose-200 hover:bg-rose-500/10 font-bold text-xs flex items-center gap-1.5 cursor-pointer shadow-xs"
+            id="superadmin-banner-logout-btn"
+            title="Encerrar sessão de Administrador e voltar à tela de login"
+          >
+            <LogOut className="h-3.5 w-3.5" />
+            <span>Sair do Admin</span>
+          </Button>
+        </div>
       </div>
 
       {/* Global Metrics Cards */}
@@ -1909,6 +1925,45 @@ Bons atendimentos e sucesso! 🚀`;
               </Button>
             </div>
           </form>
+
+          {/* Card 5: Encerrar Sessão do Superadministrador */}
+          <Card className="border-rose-500/30 bg-rose-500/5 mt-4">
+            <CardHeader className="pb-3">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/30 flex items-center justify-center text-rose-400">
+                  <LogOut className="w-5 h-5" />
+                </div>
+                <div>
+                  <CardTitle className="text-rose-400">Sair do Modo Administrador</CardTitle>
+                  <CardDescription>
+                    Encerre a sessão administrativa global. O painel será bloqueado imediatamente e a tela de login e senha será exibida com isolamento total.
+                  </CardDescription>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent className="pt-2">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 rounded-xl bg-card border border-rose-500/20">
+                <div className="space-y-0.5">
+                  <span className="text-xs font-bold text-foreground block">
+                    Desconectar Superadmin ({adminCredentials.email})
+                  </span>
+                  <span className="text-[11px] text-muted block">
+                    Nenhum dado, métrica ou configuração do console permanecerá visível após desconectar.
+                  </span>
+                </div>
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={logoutAdmin}
+                  className="border-rose-500/40 text-rose-400 hover:text-white hover:bg-rose-600 transition-colors font-bold text-xs flex items-center gap-2 cursor-pointer w-full sm:w-auto justify-center"
+                  id="superadmin-settings-logout-btn"
+                >
+                  <LogOut className="w-4 h-4" />
+                  <span>Encerrar Sessão e Sair</span>
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </div>
       )}
 

@@ -721,11 +721,18 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutAdmin = () => {
     setIsAdminAuthenticated(false);
+    setIsUserLoggedIn(false);
     try {
       sessionStorage.removeItem('omega_admin_auth');
+      localStorage.setItem('omega_user_logged_in', 'false');
+      sessionStorage.removeItem('omega_auth_user_id');
+      sessionStorage.removeItem('omega_auth_role');
+      if (typeof window !== 'undefined' && window.history?.replaceState) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
     } catch {}
-    const proUser = INITIAL_USERS.find(u => u.role === 'pro') || INITIAL_USERS[0];
-    setCurrentUser(proUser);
+    const defaultStudent = INITIAL_USERS.find(u => u.role === 'student') || INITIAL_USERS[0];
+    setCurrentUser(defaultStudent);
   };
 
   const updateAdminPassword = (newPassword: string) => {
@@ -926,10 +933,12 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const logoutUser = () => {
     setIsUserLoggedIn(false);
+    setIsAdminAuthenticated(false);
     try {
       localStorage.setItem('omega_user_logged_in', 'false');
       sessionStorage.removeItem('omega_auth_user_id');
       sessionStorage.removeItem('omega_auth_role');
+      sessionStorage.removeItem('omega_admin_auth');
       if (typeof window !== 'undefined' && window.history?.replaceState) {
         window.history.replaceState({}, document.title, window.location.pathname);
       }

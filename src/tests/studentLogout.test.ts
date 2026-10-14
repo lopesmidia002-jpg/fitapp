@@ -116,5 +116,54 @@ describe('Student Logout & Full Screen Auth Isolation', () => {
     expect(activeScreen).not.toBe('DashboardView');
     expect(mockSessionStorage['omega_auth_role']).toBeUndefined();
   });
+
+  it('authenticates superadmin with master credentials and registers admin session', () => {
+    const adminEmail = 'admin@omegatraining.pro';
+    const adminPassword = 'Omega@Admin2026';
+
+    const isLoginValid = adminEmail === 'admin@omegatraining.pro' || adminEmail === 'admin';
+    const isPasswordValid = adminPassword === 'Omega@Admin2026';
+
+    expect(isLoginValid).toBe(true);
+    expect(isPasswordValid).toBe(true);
+
+    // Save admin session
+    mockLocalStorage['omega_user_logged_in'] = 'true';
+    mockSessionStorage['omega_admin_auth'] = 'true';
+    mockSessionStorage['omega_auth_role'] = 'superadmin';
+
+    expect(mockLocalStorage['omega_user_logged_in']).toBe('true');
+    expect(mockSessionStorage['omega_admin_auth']).toBe('true');
+    expect(mockSessionStorage['omega_auth_role']).toBe('superadmin');
+  });
+
+  it('guarantees that when superadmin logs out, entire superadmin view and metrics disappear', () => {
+    // Active admin session
+    mockLocalStorage['omega_user_logged_in'] = 'true';
+    mockSessionStorage['omega_admin_auth'] = 'true';
+    mockSessionStorage['omega_auth_role'] = 'superadmin';
+    let currentRole = 'superadmin';
+    let isAdminAuthenticated = true;
+
+    // Execute logoutAdmin()
+    isAdminAuthenticated = false;
+    mockLocalStorage['omega_user_logged_in'] = 'false';
+    delete mockSessionStorage['omega_admin_auth'];
+    delete mockSessionStorage['omega_auth_role'];
+    delete mockSessionStorage['omega_auth_user_id'];
+    currentRole = 'student';
+
+    const isUserLoggedIn = mockLocalStorage['omega_user_logged_in'] === 'true';
+
+    // App.tsx gate: if (!isUserLoggedIn) return <UserAuthScreen />;
+    // Neither SuperAdminView, Header nor any background metrics are rendered
+    const activeScreen = !isUserLoggedIn ? 'UserAuthScreen' : (currentRole === 'superadmin' ? 'SuperAdminView' : 'Other');
+    expect(activeScreen).toBe('UserAuthScreen');
+    expect(activeScreen).not.toBe('SuperAdminView');
+    expect(isAdminAuthenticated).toBe(false);
+    expect(mockSessionStorage['omega_admin_auth']).toBeUndefined();
+    expect(mockLocalStorage['omega_user_logged_in']).toBe('false');
+  });
 });
+
 

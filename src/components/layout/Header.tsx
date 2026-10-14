@@ -170,10 +170,11 @@ export function Header({ onToggleMobileMenu, isMobileMenuOpen }: HeaderProps) {
             variant="outline"
             size="sm"
             onClick={logoutAdmin}
-            className="text-xs h-8 px-2.5 border-rose-500/30 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-1.5"
-            title="Bloquear sessão e sair do Painel de Administrador"
+            className="text-xs h-8 px-2.5 border-rose-500/40 text-rose-400 hover:text-rose-300 hover:bg-rose-500/10 flex items-center gap-1.5 font-bold shadow-xs cursor-pointer"
+            title="Encerrar sessão de Administrador e voltar à tela de login"
+            id="header-admin-logout-btn"
           >
-            <Lock className="h-3 w-3" />
+            <LogOut className="h-3.5 w-3.5" />
             <span className="hidden md:inline">Sair do Admin</span>
           </Button>
         )}

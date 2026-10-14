@@ -101,10 +101,13 @@ export function UserAuthModal({ isOpen, onClose, onSuccess }: UserAuthModalProps
     setSuccessMessage(`Enviamos um link de recuperação para ${forgotEmail}.`);
   };
 
-  const handleQuickFill = (role: 'pro' | 'student') => {
+  const handleQuickFill = (role: 'pro' | 'student' | 'admin') => {
     setErrorMessage('');
     setSuccessMessage('');
-    if (role === 'pro') {
+    if (role === 'admin') {
+      setLoginEmail('admin@omegatraining.pro');
+      setLoginPassword('Omega@Admin2026');
+    } else if (role === 'pro') {
       setLoginEmail('nilson.coach@omegatraining.pro');
       setLoginPassword('treinador123');
     } else {
@@ -230,26 +233,36 @@ export function UserAuthModal({ isOpen, onClose, onSuccess }: UserAuthModalProps
               <span className="text-[11px] font-bold text-muted uppercase tracking-wider block text-center">
                 Acesso Rápido para Demonstração:
               </span>
-              <div className="grid grid-cols-2 gap-2">
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={() => handleQuickFill('pro')}
-                  className="text-xs flex items-center gap-1.5 justify-center py-2"
-                >
-                  <Dumbbell className="h-3.5 w-3.5 text-primary" />
-                  <span>Treinador Demo</span>
-                </Button>
+              <div className="grid grid-cols-3 gap-1.5 sm:gap-2">
                 <Button
                   type="button"
                   variant="outline"
                   size="sm"
                   onClick={() => handleQuickFill('student')}
-                  className="text-xs flex items-center gap-1.5 justify-center py-2"
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-primary/30 hover:bg-primary/10"
                 >
-                  <UserCheck className="h-3.5 w-3.5 text-primary" />
-                  <span>Aluno Demo</span>
+                  <UserCheck className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="truncate">Aluno Demo</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickFill('pro')}
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-border hover:bg-card"
+                >
+                  <Dumbbell className="h-3.5 w-3.5 text-primary shrink-0" />
+                  <span className="truncate">Treinador Demo</span>
+                </Button>
+                <Button
+                  type="button"
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleQuickFill('admin')}
+                  className="text-[11px] sm:text-xs flex items-center gap-1 sm:gap-1.5 justify-center py-2 px-1 border-rose-500/30 text-rose-400 hover:bg-rose-500/10 hover:text-rose-300"
+                >
+                  <ShieldCheck className="h-3.5 w-3.5 text-rose-400 shrink-0" />
+                  <span className="truncate">Admin Demo</span>
                 </Button>
               </div>
             </div>
