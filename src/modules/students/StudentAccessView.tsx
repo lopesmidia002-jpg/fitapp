@@ -288,8 +288,10 @@ Bons treinos! 🔥`;
   };
 
   const handleDeleteStudent = (student: Student) => {
-    if (confirm(`Atenção: Deseja EXCLUIR e revogar permanentemente o acesso do aluno ${student.fullName}?\n\nAs credenciais de login serão bloqueadas imediatamente.`)) {
+    if (confirm(`Atenção: Deseja EXCLUIR permanentemente o aluno "${student.fullName}"?\n\nO cadastro e todas as credenciais de acesso serão removidos.`)) {
       deleteStudent(student.id);
+      setShareToast(`Aluno "${student.fullName}" excluído com sucesso!`);
+      setTimeout(() => setShareToast(null), 3500);
     }
   };
 

@@ -360,9 +360,11 @@ Bons treinos! 🔥`;
   };
 
   const handleDeleteStudent = (student: Student) => {
-    if (confirm(`Atenção: Deseja EXCLUIR e revogar permanentemente o acesso do aluno ${student.fullName}?\n\nAs credenciais de login serão bloqueadas imediatamente.`)) {
+    if (confirm(`Atenção: Deseja EXCLUIR permanentemente o aluno "${student.fullName}" da plataforma?\n\nO cadastro e todas as credenciais de acesso serão removidos.`)) {
       deleteStudent(student.id);
-      addAuditLog('STUDENT_ACCOUNT_EXCLUDED', `${student.fullName} — Credenciais revogadas`);
+      addAuditLog('STUDENT_ACCOUNT_EXCLUDED', `${student.fullName} — Excluído permanentemente da plataforma`);
+      setShareToast(`Aluno "${student.fullName}" excluído com sucesso!`);
+      setTimeout(() => setShareToast(null), 3500);
     }
   };
 
@@ -640,9 +642,11 @@ Bons atendimentos e sucesso! 🚀`;
   };
 
   const handleDeleteTrainer = (trainer: Trainer) => {
-    if (confirm(`Atenção: Deseja DESATIVAR/EXCLUIR o cadastro do(a) treinador(a) ${trainer.fullName}?\n\nO acesso à plataforma será revogado imediatamente.`)) {
+    if (confirm(`Atenção: Deseja EXCLUIR permanentemente o(a) treinador(a) "${trainer.fullName}" da plataforma?\n\nO cadastro profissional e credenciais serão removidos.`)) {
       deleteTrainer(trainer.id);
-      addAuditLog('TRAINER_ACCOUNT_EXCLUDED', `${trainer.fullName} — Credenciais revogadas`);
+      addAuditLog('TRAINER_ACCOUNT_EXCLUDED', `${trainer.fullName} — Excluído permanentemente da plataforma`);
+      setShareToast(`Treinador "${trainer.fullName}" excluído com sucesso!`);
+      setTimeout(() => setShareToast(null), 3500);
     }
   };
 

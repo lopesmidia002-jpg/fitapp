@@ -31,12 +31,13 @@ import {
   Save,
   Check,
   RefreshCw,
+  Trash2,
 } from 'lucide-react';
 import { formatDate } from '../../lib/utils';
 
 
 export function StudentsView() {
-  const { students, addStudent, updateStudent, archiveStudent, nutritionPlans, toggleDietVisibility } = useApp();
+  const { students, addStudent, updateStudent, archiveStudent, deleteStudent, nutritionPlans, toggleDietVisibility } = useApp();
 
   const [searchQuery, setSearchQuery] = useState('');
   const [filterStatus, setFilterStatus] = useState<'all' | 'active' | 'inactive' | 'archived'>('all');
@@ -192,6 +193,17 @@ export function StudentsView() {
       setToastMessage(`As alterações no perfil de ${studentName} foram salvas com sucesso!`);
       setTimeout(() => setToastMessage(null), 4500);
     }, 1100);
+  };
+
+  const handleDeleteStudent = (student: Student, e?: React.MouseEvent) => {
+    e?.stopPropagation();
+    if (confirm(`Atenção: Deseja EXCLUIR permanentemente o(a) aluno(a) "${student.fullName}" da sua consultoria?\n\nEsta ação removerá todos os dados e acessos deste aluno.`)) {
+      deleteStudent(student.id);
+      if (selectedStudent?.id === student.id) setSelectedStudent(null);
+      if (editingStudent?.id === student.id) setEditingStudent(null);
+      setToastMessage(`Aluno "${student.fullName}" excluído com sucesso!`);
+      setTimeout(() => setToastMessage(null), 4500);
+    }
   };
 
   // Filter students
@@ -401,6 +413,14 @@ export function StudentsView() {
                     >
                       <Pencil className="h-3.5 w-3.5" />
                     </button>
+                    <button
+                      type="button"
+                      onClick={(e) => handleDeleteStudent(student, e)}
+                      className="p-1.5 rounded-lg text-muted hover:text-rose-400 hover:bg-rose-500/10 transition-colors"
+                      title="Excluir aluno permanentemente"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </button>
                     <Badge variant={student.status === 'active' ? 'success' : student.status === 'inactive' ? 'warning' : 'neutral'} size="sm">
                       {student.status === 'active' ? 'Ativo' : student.status === 'inactive' ? 'Inativo' : 'Arquivado'}
                     </Badge>
@@ -544,18 +564,30 @@ export function StudentsView() {
 
             {/* Actions */}
             <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-border">
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => {
-                  archiveStudent(selectedStudent.id);
-                  setSelectedStudent(null);
-                }}
-                className="flex items-center gap-1.5"
-              >
-                <Archive className="h-3.5 w-3.5" />
-                <span>Arquivar Aluno</span>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => handleDeleteStudent(selectedStudent)}
+                  className="flex items-center gap-1.5 bg-rose-500/10 text-rose-400 border border-rose-500/30 hover:bg-rose-500/20"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  <span>Excluir Aluno</span>
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    archiveStudent(selectedStudent.id);
+                    setSelectedStudent(null);
+                  }}
+                  className="flex items-center gap-1.5"
+                >
+                  <Archive className="h-3.5 w-3.5" />
+                  <span>Arquivar Aluno</span>
+                </Button>
+              </div>
 
               <div className="flex items-center gap-2">
                 <Button
@@ -751,18 +783,28 @@ export function StudentsView() {
               </div>
             )}
 
-            <div className="flex items-center justify-end gap-2 pt-3 border-t border-border">
-              <Button
+            <div className="flex items-center justify-between gap-2 pt-3 border-t border-border">
+              <button
                 type="button"
-                variant="ghost"
-                onClick={() => {
-                  setEditingStudent(null);
-                  setSaveStatus('idle');
-                }}
-                disabled={saveStatus === 'saving'}
+                onClick={() => handleDeleteStudent(editingStudent)}
+                className="flex items-center gap-1.5 text-xs text-rose-400 hover:text-rose-300 font-semibold px-2.5 py-1.5 rounded-lg hover:bg-rose-500/10 transition-colors border border-rose-500/20"
               >
-                Cancelar
-              </Button>
+                <Trash2 className="h-3.5 w-3.5" />
+                <span>Excluir Aluno</span>
+              </button>
+
+              <div className="flex items-center gap-2">
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={() => {
+                    setEditingStudent(null);
+                    setSaveStatus('idle');
+                  }}
+                  disabled={saveStatus === 'saving'}
+                >
+                  Cancelar
+                </Button>
               <Button
                 type="submit"
                 variant="primary"
@@ -791,7 +833,8 @@ export function StudentsView() {
                 )}
               </Button>
             </div>
-          </form>
+          </div>
+        </form>
         </Modal>
       )}
 

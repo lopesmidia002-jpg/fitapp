@@ -173,32 +173,50 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
 
   const [students, setStudents] = useState<Student[]>(() => {
     const saved = localStorage.getItem('omega_students') || localStorage.getItem('fitcore_students');
-    if (!saved) return INITIAL_STUDENTS;
+    let deletedStudentIds: string[] = [];
+    try {
+      deletedStudentIds = JSON.parse(localStorage.getItem('omega_deleted_student_ids') || '[]');
+    } catch {}
+
+    if (!saved) {
+      return INITIAL_STUDENTS.filter(s => !deletedStudentIds.includes(s.id));
+    }
     try {
       const parsed: Student[] = JSON.parse(saved);
-      return parsed.map(s => ({
-        ...s,
-        email: sanitizeEmail(s.email),
-      }));
+      return parsed
+        .filter(s => !deletedStudentIds.includes(s.id))
+        .map(s => ({
+          ...s,
+          email: sanitizeEmail(s.email),
+        }));
     } catch {
-      return INITIAL_STUDENTS;
+      return INITIAL_STUDENTS.filter(s => !deletedStudentIds.includes(s.id));
     }
   });
 
   const [trainers, setTrainers] = useState<Trainer[]>(() => {
     const saved = localStorage.getItem('omega_trainers') || localStorage.getItem('fitcore_trainers');
-    if (!saved) return INITIAL_TRAINERS;
+    let deletedTrainerIds: string[] = [];
+    try {
+      deletedTrainerIds = JSON.parse(localStorage.getItem('omega_deleted_trainer_ids') || '[]');
+    } catch {}
+
+    if (!saved) {
+      return INITIAL_TRAINERS.filter(t => !deletedTrainerIds.includes(t.id));
+    }
     try {
       const parsed: Trainer[] = JSON.parse(saved);
-      const sanitized = parsed.map(t => ({
-        ...t,
-        email: sanitizeEmail(t.email),
-      }));
+      const sanitized = parsed
+        .filter(t => !deletedTrainerIds.includes(t.id))
+        .map(t => ({
+          ...t,
+          email: sanitizeEmail(t.email),
+        }));
       const existingIds = new Set(sanitized.map(t => t.id));
-      const missing = INITIAL_TRAINERS.filter(t => !existingIds.has(t.id));
+      const missing = INITIAL_TRAINERS.filter(t => !existingIds.has(t.id) && !deletedTrainerIds.includes(t.id));
       return [...sanitized, ...missing];
     } catch {
-      return INITIAL_TRAINERS;
+      return INITIAL_TRAINERS.filter(t => !deletedTrainerIds.includes(t.id));
     }
   });
 
@@ -942,13 +960,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteStudent = (id: string) => {
-    setStudents(prev => prev.map(s => s.id === id ? {
-      ...s,
-      status: 'blocked',
-      accessBlocked: true,
-      blockedAt: new Date().toISOString(),
-      blockedReason: 'Aluno excluído da base e acesso revogado'
-    } : s));
+    setStudents(prev => prev.filter(s => s.id !== id));
+    setOrganization(prev => ({
+      ...prev,
+      studentCount: Math.max(0, prev.studentCount - 1),
+    }));
+    if (currentUser.id === id) {
+      logoutUser();
+    }
+    try {
+      const deleted: string[] = JSON.parse(localStorage.getItem('omega_deleted_student_ids') || '[]');
+      if (!deleted.includes(id)) {
+        deleted.push(id);
+        localStorage.setItem('omega_deleted_student_ids', JSON.stringify(deleted));
+      }
+    } catch {}
   };
 
   const resetStudentPassword = (id: string, newPassword: string) => {
@@ -1004,13 +1030,21 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   };
 
   const deleteTrainer = (id: string) => {
-    setTrainers(prev => prev.map(t => t.id === id ? {
-      ...t,
-      status: 'blocked',
-      accessBlocked: true,
-      blockedAt: new Date().toISOString(),
-      blockedReason: 'Treinador desativado e acesso revogado'
-    } : t));
+    setTrainers(prev => prev.filter(t => t.id !== id));
+    setOrganization(prev => ({
+      ...prev,
+      proCount: Math.max(0, (prev.proCount || 1) - 1),
+    }));
+    if (currentUser.id === id) {
+      logoutUser();
+    }
+    try {
+      const deleted: string[] = JSON.parse(localStorage.getItem('omega_deleted_trainer_ids') || '[]');
+      if (!deleted.includes(id)) {
+        deleted.push(id);
+        localStorage.setItem('omega_deleted_trainer_ids', JSON.stringify(deleted));
+      }
+    } catch {}
   };
 
   const resetTrainerPassword = (id: string, customPassword?: string): string => {
