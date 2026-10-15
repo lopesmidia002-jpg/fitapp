@@ -10,7 +10,6 @@ import {
   Key,
   Users,
   Search,
-  Plus,
   Lock,
   CheckCircle2,
   AlertTriangle,
@@ -25,21 +24,13 @@ import {
   UserCheck,
   UserX,
   Trash2,
-  Camera,
-  Upload,
-  Sparkles,
-  RefreshCw,
-  ShieldCheck,
   Smartphone,
-  X,
   Phone
 } from 'lucide-react';
 
 export function StudentAccessView() {
   const {
     students,
-    organization,
-    addStudent,
     blockStudent,
     unblockStudent,
     deleteStudent,
@@ -50,53 +41,6 @@ export function StudentAccessView() {
   const [statusFilter, setStatusFilter] = useState<'all' | 'active' | 'blocked'>('all');
   const [visiblePasswords, setVisiblePasswords] = useState<Record<string, boolean>>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
-
-  // Modal: Register new student
-  const [isRegisterModalOpen, setIsRegisterModalOpen] = useState(false);
-  const [registerForm, setRegisterForm] = useState({
-    fullName: '',
-    email: '',
-    phone: '',
-    avatarUrl: '',
-    temporaryPassword: 'Omega@' + Math.floor(1000 + Math.random() * 9000),
-    goal: 'Hipertrofia e Condicionamento',
-    currentWeightKg: 70,
-    targetWeightKg: 68,
-    heightCm: 175,
-  });
-
-  const PRESET_AVATARS = [
-    'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&w=150&q=80',
-    'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=150&q=80',
-  ];
-
-  const handlePhotoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    if (file.size > 5 * 1024 * 1024) {
-      alert('A imagem selecionada ultrapassa 5MB. Por favor escolha uma imagem menor.');
-      return;
-    }
-
-    const reader = new FileReader();
-    reader.onload = (event) => {
-      const result = event.target?.result as string;
-      if (result) {
-        setRegisterForm(prev => ({ ...prev, avatarUrl: result }));
-      }
-    };
-    reader.readAsDataURL(file);
-  };
-
-  const handleRandomPresetAvatar = () => {
-    const randomIndex = Math.floor(Math.random() * PRESET_AVATARS.length);
-    setRegisterForm(prev => ({ ...prev, avatarUrl: PRESET_AVATARS[randomIndex] }));
-  };
 
   // Modal: Reset password
   const [isResetModalOpen, setIsResetModalOpen] = useState(false);
@@ -205,52 +149,6 @@ Bons treinos! 🔥`;
     setTimeout(() => setCopiedField(null), 2000);
   };
 
-  const handleGenerateRandomPassword = () => {
-    const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789!@#$%';
-    let result = 'Omega@';
-    for (let i = 0; i < 4; i++) {
-      result += chars.charAt(Math.floor(Math.random() * chars.length));
-    }
-    setRegisterForm(prev => ({ ...prev, temporaryPassword: result }));
-  };
-
-  const handleRegisterStudent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!registerForm.fullName || !registerForm.email) return;
-
-    const finalAvatar = registerForm.avatarUrl || `https://images.unsplash.com/photo-${1534528741775 + students.length}?auto=format&fit=crop&w=150&q=80`;
-    const createdStudent = addStudent({
-      fullName: registerForm.fullName,
-      email: registerForm.email,
-      phone: registerForm.phone,
-      avatarUrl: finalAvatar,
-      goal: registerForm.goal,
-      currentWeightKg: Number(registerForm.currentWeightKg),
-      targetWeightKg: Number(registerForm.targetWeightKg),
-      heightCm: Number(registerForm.heightCm),
-      status: 'active',
-      temporaryPassword: registerForm.temporaryPassword,
-      accessBlocked: false,
-    });
-
-    setIsRegisterModalOpen(false);
-    setTargetStudentForShare(createdStudent);
-    setIsShareModalOpen(true);
-    setShareToast('Aluno cadastrado com sucesso! Envie o link de acesso abaixo.');
-
-    setRegisterForm({
-      fullName: '',
-      email: '',
-      phone: '',
-      avatarUrl: '',
-      temporaryPassword: 'Omega@' + Math.floor(1000 + Math.random() * 9000),
-      goal: 'Hipertrofia e Condicionamento',
-      currentWeightKg: 70,
-      targetWeightKg: 68,
-      heightCm: 175,
-    });
-  };
-
   const handleBlockStudent = (student: Student) => {
     const reason = prompt(`Confirma o bloqueio de acesso para ${student.fullName}?\nInforme o motivo do bloqueio:`, 'Suspensão temporária pelo Treinador');
     if (reason !== null) {
@@ -302,23 +200,12 @@ Bons treinos! 🔥`;
             </span>
           </div>
           <h1 className="text-2xl font-black tracking-tight text-foreground flex items-center gap-2.5">
-            <span>Cadastramento & Acesso de Alunos</span>
+            <span>Login & Senhas dos Alunos</span>
             <span className="text-primary font-mono text-lg font-bold">({students.length})</span>
           </h1>
           <p className="text-sm text-muted mt-1">
-            Cadastre novos alunos com login e senha provisória, envie links diretos via WhatsApp e gerencie permissões de acesso.
+            Gerencie credenciais de login, senhas provisórias e links diretos para cada aluno cadastrado no sistema. Novos cadastros são realizados pelo menu principal em Alunos (CRM).
           </p>
-        </div>
-
-        <div className="flex items-center gap-2.5 shrink-0 flex-wrap">
-          <Button
-            variant="primary"
-            onClick={() => setIsRegisterModalOpen(true)}
-            className="flex items-center gap-2 shadow-neon-sm font-bold"
-          >
-            <Plus className="h-4 w-4" />
-            <span>Cadastrar Novo Aluno com Acesso</span>
-          </Button>
         </div>
       </div>
 
@@ -655,178 +542,6 @@ Bons treinos! 🔥`;
           )}
         </CardContent>
       </Card>
-
-      {/* MODAL 1: CADASTRAR NOVO ALUNO COM LOGIN E SENHA */}
-      <Modal
-        isOpen={isRegisterModalOpen}
-        onClose={() => setIsRegisterModalOpen(false)}
-        title="Cadastrar Aluno com Login e Senha"
-        description="Gere as credenciais de acesso ao aplicativo mobile e ative a conta do aluno."
-      >
-        <form onSubmit={handleRegisterStudent} className="space-y-4">
-          {/* Foto de Perfil do Aluno */}
-          <div className="p-3.5 rounded-xl border border-border bg-surface/50 space-y-3">
-            <label className="text-xs font-semibold text-foreground block">
-              Foto de Perfil do Aluno
-            </label>
-            <div className="flex flex-col sm:flex-row items-center gap-4">
-              <div className="relative group shrink-0">
-                <div className="w-20 h-20 rounded-2xl overflow-hidden border-2 border-dashed border-border group-hover:border-primary/50 bg-background flex items-center justify-center transition-colors">
-                  {registerForm.avatarUrl ? (
-                    <img
-                      src={registerForm.avatarUrl}
-                      alt="Prévia da foto"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center text-muted text-center p-2">
-                      <Camera className="w-6 h-6 mb-1 opacity-60 text-primary" />
-                      <span className="text-[10px] font-medium leading-tight">Sem foto</span>
-                    </div>
-                  )}
-                </div>
-                {registerForm.avatarUrl && (
-                  <button
-                    type="button"
-                    onClick={() => setRegisterForm(prev => ({ ...prev, avatarUrl: '' }))}
-                    title="Remover foto"
-                    className="absolute -top-1.5 -right-1.5 w-6 h-6 rounded-full bg-red-500 text-white flex items-center justify-center hover:bg-red-600 transition-colors shadow-md"
-                  >
-                    <X className="w-3.5 h-3.5" />
-                  </button>
-                )}
-              </div>
-
-              <div className="flex-1 space-y-2 text-center sm:text-left w-full">
-                <div className="flex flex-wrap items-center gap-2 justify-center sm:justify-start">
-                  <label
-                    htmlFor="student-access-photo-upload"
-                    className="cursor-pointer inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-surface border border-border hover:border-primary/50 text-xs font-semibold text-foreground hover:text-primary transition-all shadow-sm active:scale-95"
-                  >
-                    <Upload className="w-3.5 h-3.5 text-primary" />
-                    <span>Carregar Foto</span>
-                    <input
-                      id="student-access-photo-upload"
-                      type="file"
-                      accept="image/png,image/jpeg,image/webp,image/gif"
-                      onChange={handlePhotoUpload}
-                      className="hidden"
-                    />
-                  </label>
-
-                  <button
-                    type="button"
-                    onClick={handleRandomPresetAvatar}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary/10 border border-primary/20 hover:bg-primary/20 text-xs font-semibold text-primary transition-all active:scale-95"
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Avatar Rápido</span>
-                  </button>
-                </div>
-                <p className="text-[11px] text-muted leading-relaxed">
-                  JPG, PNG ou WebP até 5MB. A foto será exibida no perfil do aluno, painel do treinador e no aplicativo mobile.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <Input
-            label="Nome Completo *"
-            placeholder="Ex: Carlos Daniel Moreira"
-            value={registerForm.fullName}
-            onChange={(e) => setRegisterForm({ ...registerForm, fullName: e.target.value })}
-            required
-          />
-
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <Input
-              label="E-mail de Login *"
-              type="email"
-              placeholder="carlos.aluno@email.com"
-              value={registerForm.email}
-              onChange={(e) => setRegisterForm({ ...registerForm, email: e.target.value })}
-              required
-            />
-
-            <Input
-              label="Telefone / WhatsApp *"
-              placeholder="(11) 98765-4321"
-              value={registerForm.phone}
-              onChange={(e) => setRegisterForm({ ...registerForm, phone: e.target.value })}
-              required
-            />
-          </div>
-
-          {/* Password with generator */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="text-xs font-semibold text-foreground">
-                Senha de Acesso Inicial *
-              </label>
-              <button
-                type="button"
-                onClick={handleGenerateRandomPassword}
-                className="text-[11px] text-primary hover:underline font-bold flex items-center gap-1"
-              >
-                <RefreshCw className="h-3 w-3" />
-                <span>Gerar Senha Segura</span>
-              </button>
-            </div>
-            <Input
-              value={registerForm.temporaryPassword}
-              onChange={(e) => setRegisterForm({ ...registerForm, temporaryPassword: e.target.value })}
-              required
-            />
-            <p className="text-[11px] text-muted">
-              Esta senha provisória permitirá ao aluno acessar a plataforma via Web ou Mobile PWA.
-            </p>
-          </div>
-
-          <Input
-            label="Objetivo do Aluno"
-            placeholder="Ex: Emagrecimento e Definição Muscular"
-            value={registerForm.goal}
-            onChange={(e) => setRegisterForm({ ...registerForm, goal: e.target.value })}
-          />
-
-          <div className="grid grid-cols-3 gap-3">
-            <Input
-              label="Peso Inicial (kg)"
-              type="number"
-              step="0.1"
-              value={registerForm.currentWeightKg}
-              onChange={(e) => setRegisterForm({ ...registerForm, currentWeightKg: Number(e.target.value) })}
-            />
-            <Input
-              label="Meta Peso (kg)"
-              type="number"
-              step="0.1"
-              value={registerForm.targetWeightKg}
-              onChange={(e) => setRegisterForm({ ...registerForm, targetWeightKg: Number(e.target.value) })}
-            />
-            <Input
-              label="Altura (cm)"
-              type="number"
-              value={registerForm.heightCm}
-              onChange={(e) => setRegisterForm({ ...registerForm, heightCm: Number(e.target.value) })}
-            />
-          </div>
-
-          <div className="p-3 rounded-xl bg-primary/10 border border-primary/20 text-xs text-primary flex items-start gap-2">
-            <ShieldCheck className="h-4 w-4 shrink-0 mt-0.5" />
-            <span>As credenciais serão criptografadas e salvas com isolamento multi-tenant ativo para <strong>Omega Training</strong>.</span>
-          </div>
-
-          <div className="flex items-center justify-end gap-2 pt-2 border-t border-border">
-            <Button type="button" variant="ghost" onClick={() => setIsRegisterModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button type="submit" variant="primary">
-              Cadastrar e Liberar Acesso
-            </Button>
-          </div>
-        </form>
-      </Modal>
 
       {/* MODAL 2: RESETAR / NOVA SENHA */}
       {targetStudentForReset && (

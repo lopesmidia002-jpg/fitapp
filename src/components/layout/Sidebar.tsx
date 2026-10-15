@@ -30,7 +30,7 @@ export function Sidebar({ currentTab, onSelectTab, isOpenMobile = false, onClose
   const navigationItems = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'students', label: 'Alunos (CRM)', icon: Users, badge: students.length.toString() },
-    { id: 'student-access', label: 'Cadastramento & Acesso de Alunos', icon: Key, badge: students.length.toString() },
+    { id: 'student-access', label: 'Login & Senhas dos Alunos', icon: Key, badge: students.length.toString() },
     { id: 'workouts', label: 'Treinos & Exercícios', icon: Dumbbell },
     { id: 'nutrition', label: 'Nutrição & Dietas', icon: Utensils },
     { id: 'taco', label: 'Tabela TACO', icon: BookOpen },
